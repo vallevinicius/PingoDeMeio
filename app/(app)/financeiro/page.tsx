@@ -1,7 +1,7 @@
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, CircleDollarSign, TrendingDown, TrendingUp } from 'lucide-react'
+import { Banknote, ChevronLeft, ChevronRight, CircleDollarSign, CreditCard, QrCode, TrendingDown, TrendingUp } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
-import { formatBRL } from '@/lib/format'
+import { formatBRL, paymentLabel } from '@/lib/format'
 import { ExpenseForm } from '@/components/expense-form'
 import { ExpenseRow } from '@/components/expense-row'
 import { AccountBalanceBox } from '@/components/account-balance-box'
@@ -56,10 +56,10 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
     return `/financeiro?${params.toString()}`
   }
 
-  const [orders, allExpenses, entriesCount, entries, accountBalance] = await Promise.all([
+  const [orders, allExpenses, entriesCount, entries, allTimeOrders, allTimeEntries] = await Promise.all([
     prisma.order.findMany({
       where: { createdAt: { gte: start, lt: end }, status: { not: 'CANCELADO' } },
-      select: { total: true },
+      select: { total: true, paymentMethod: true },
     }),
     prisma.expense.findMany({
       where: { date: { gte: start, lt: end } },
@@ -73,7 +73,8 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
       skip: (currentPage - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
-    prisma.accountBalance.findUnique({ where: { id: 1 } }),
+    prisma.order.aggregate({ where: { status: { not: 'CANCELADO' } }, _sum: { total: true } }),
+    prisma.expense.groupBy({ by: ['type'], _sum: { amount: true } }),
   ])
 
   const ordersRevenue = orders.reduce((sum, o) => sum + Number(o.total), 0)
@@ -81,6 +82,23 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
   const totalExpenses = allExpenses.filter((e) => e.type === 'DESPESA').reduce((sum, e) => sum + Number(e.amount), 0)
   const revenue = ordersRevenue + manualIncome
   const profit = revenue - totalExpenses
+
+  const allTimeRevenue = Number(allTimeOrders._sum.total ?? 0)
+    + Number(allTimeEntries.find((e) => e.type === 'RECEITA')?._sum.amount ?? 0)
+  const allTimeExpenses = Number(allTimeEntries.find((e) => e.type === 'DESPESA')?._sum.amount ?? 0)
+  const accountBalance = allTimeRevenue - allTimeExpenses
+
+  const paymentBreakdown = (['PIX', 'CARTAO', 'DINHEIRO'] as const).map((method) => {
+    const methodOrders = orders.filter((o) => o.paymentMethod === method)
+    const total = methodOrders.reduce((sum, o) => sum + Number(o.total), 0)
+    return {
+      method,
+      label: paymentLabel(method),
+      total,
+      count: methodOrders.length,
+      pct: ordersRevenue > 0 ? Math.round((total / ordersRevenue) * 100) : 0,
+    }
+  })
 
   const totalPages = Math.max(1, Math.ceil(entriesCount / PAGE_SIZE))
 
@@ -95,6 +113,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
 
       <div className="inline-form" style={{ marginTop: 0, marginBottom: 20, alignItems: 'center' }}>
         <Link
+          scroll={false}
           href={`/financeiro?month=${monthKey(prev.year, prev.month)}`}
           aria-label="Mês anterior"
           style={{ display: 'inline-flex', color: '#6d6370', textDecoration: 'none' }}
@@ -106,6 +125,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
           <span style={{ display: 'inline-flex', color: '#6d6370', opacity: 0.3 }}><ChevronRight size={18} /></span>
         ) : (
           <Link
+            scroll={false}
             href={`/financeiro?month=${monthKey(next.year, next.month)}`}
             aria-label="Próximo mês"
             style={{ display: 'inline-flex', color: '#6d6370', textDecoration: 'none' }}
@@ -115,10 +135,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
         )}
       </div>
 
-      <AccountBalanceBox
-        amount={accountBalance ? Number(accountBalance.amount) : 0}
-        updatedAt={accountBalance ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(accountBalance.updatedAt) : null}
-      />
+      <AccountBalanceBox amount={accountBalance} />
 
       <div className="metrics" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
         <div className="metric">
@@ -135,7 +152,29 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
         </div>
       </div>
 
-      <section className="panel" style={{ marginTop: 20, marginBottom: 20 }}>
+      <section className="panel" style={{ marginBottom: 20 }}>
+        <div className="panel-head"><div><h2>Meios de pagamento</h2><p>Como o dinheiro entrou em {monthLabel}</p></div></div>
+        {ordersRevenue === 0 ? (
+          <p className="subtext" style={{ marginTop: 18 }}>Nenhum pedido pago neste mês ainda.</p>
+        ) : (
+          paymentBreakdown.map((p) => (
+            <div className="stock-row" key={p.method}>
+              <div className="stock-info">
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {p.method === 'PIX' && <QrCode size={13} />}
+                  {p.method === 'CARTAO' && <CreditCard size={13} />}
+                  {p.method === 'DINHEIRO' && <Banknote size={13} />}
+                  {p.label} <small style={{ color: '#a39aa4' }}>({p.count} pedido{p.count === 1 ? '' : 's'})</small>
+                </span>
+                <b>{formatBRL(p.total)} <small style={{ color: '#a39aa4' }}>{p.pct}%</small></b>
+              </div>
+              <div className="progress"><i style={{ width: `${p.pct}%`, background: 'var(--purple)' }} /></div>
+            </div>
+          ))
+        )}
+      </section>
+
+      <section className="panel" style={{ marginBottom: 20 }}>
         <div className="panel-head"><div><h2>Novo lançamento</h2><p>Registre uma despesa ou uma receita extra e escolha o dia em que ocorreu</p></div></div>
         <div style={{ marginTop: 16 }}>
           <ExpenseForm />
@@ -149,6 +188,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
           {TABS.map((tab) => (
             <Link
               key={tab.label}
+              scroll={false}
               href={buildHref({ type: tab.value, page: 1 })}
               className={`chip ${typeFilter === tab.value ? 'selected' : ''}`}
               style={{ textDecoration: 'none' }}
@@ -182,7 +222,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
         {totalPages > 1 && (
           <div className="inline-form" style={{ marginTop: 16, alignItems: 'center', justifyContent: 'center' }}>
             {currentPage > 1 ? (
-              <Link href={buildHref({ page: currentPage - 1 })} style={{ display: 'inline-flex', color: '#6d6370', textDecoration: 'none' }} aria-label="Página anterior">
+              <Link scroll={false} href={buildHref({ page: currentPage - 1 })} style={{ display: 'inline-flex', color: '#6d6370', textDecoration: 'none' }} aria-label="Página anterior">
                 <ChevronLeft size={18} />
               </Link>
             ) : (
@@ -192,7 +232,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
               Página {currentPage} de {totalPages}
             </span>
             {currentPage < totalPages ? (
-              <Link href={buildHref({ page: currentPage + 1 })} style={{ display: 'inline-flex', color: '#6d6370', textDecoration: 'none' }} aria-label="Próxima página">
+              <Link scroll={false} href={buildHref({ page: currentPage + 1 })} style={{ display: 'inline-flex', color: '#6d6370', textDecoration: 'none' }} aria-label="Próxima página">
                 <ChevronRight size={18} />
               </Link>
             ) : (
