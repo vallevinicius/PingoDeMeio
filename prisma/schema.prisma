@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum PaymentMethod {
+  PIX
+  CARTAO
+  DINHEIRO
+}
+
+enum OrderStatus {
+  PREPARANDO
+  CONCLUIDO
+  CANCELADO
+}
+
+model Product {
+  id         Int                 @id @default(autoincrement())
+  name       String
+  sizeLabel  String              @default("300ml")
+  price      Decimal             @db.Decimal(10, 2)
+  active     Boolean             @default(true)
+  createdAt  DateTime            @default(now())
+  recipe     ProductIngredient[]
+  orderItems OrderItem[]
+}
+
+model Ingredient {
+  id          Int                 @id @default(autoincrement())
+  name        String              @unique
+  unit        String
+  quantity    Decimal             @db.Decimal(10, 3)
+  minQuantity Decimal             @db.Decimal(10, 3)
+  updatedAt   DateTime            @updatedAt
+  usedIn      ProductIngredient[]
+}
+
+model ProductIngredient {
+  id           Int        @id @default(autoincrement())
+  product      Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId    Int
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  ingredientId Int
+  quantity     Decimal    @db.Decimal(10, 3)
+
+  @@unique([productId, ingredientId])
+}
+
+model Order {
+  id            Int           @id @default(autoincrement())
+  createdAt     DateTime      @default(now())
+  paymentMethod PaymentMethod
+  status        OrderStatus   @default(PREPARANDO)
+  total         Decimal       @db.Decimal(10, 2)
+  items         OrderItem[]
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   Int
+  product   Product  @relation(fields: [productId], references: [id])
+  productId Int
+  quantity  Int      @default(1)
+  unitPrice Decimal  @db.Decimal(10, 2)
+}
