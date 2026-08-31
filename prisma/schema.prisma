@@ -72,10 +72,16 @@ model OrderItem {
   unitPrice Decimal  @db.Decimal(10, 2)
 }
 
+enum EntryType {
+  DESPESA
+  RECEITA
+}
+
 model Expense {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
+  type        EntryType @default(DESPESA)
   description String
-  amount      Decimal  @db.Decimal(10, 2)
+  amount      Decimal   @db.Decimal(10, 2)
   date        DateTime
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 }

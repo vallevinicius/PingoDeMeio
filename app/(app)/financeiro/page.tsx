@@ -46,8 +46,10 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
     }),
   ])
 
-  const revenue = orders.reduce((sum, o) => sum + Number(o.total), 0)
-  const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
+  const ordersRevenue = orders.reduce((sum, o) => sum + Number(o.total), 0)
+  const manualIncome = expenses.filter((e) => e.type === 'RECEITA').reduce((sum, e) => sum + Number(e.amount), 0)
+  const totalExpenses = expenses.filter((e) => e.type === 'DESPESA').reduce((sum, e) => sum + Number(e.amount), 0)
+  const revenue = ordersRevenue + manualIncome
   const profit = revenue - totalExpenses
 
   const monthLabel = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(start)
@@ -84,11 +86,11 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
       <div className="metrics" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
         <div className="metric">
           <div className="metric-top"><div className="metric-icon"><CircleDollarSign /></div></div>
-          <p>Receita do mês</p><h3>{formatBRL(revenue)}</h3><small>{orders.length} pedidos válidos</small>
+          <p>Receita do mês</p><h3>{formatBRL(revenue)}</h3><small>{orders.length} pedidos válidos{manualIncome > 0 ? ` + ${formatBRL(manualIncome)} extra` : ''}</small>
         </div>
         <div className="metric">
           <div className="metric-top"><div className="metric-icon"><TrendingDown /></div></div>
-          <p>Despesas do mês</p><h3>{formatBRL(totalExpenses)}</h3><small>{expenses.length} despesas lançadas</small>
+          <p>Despesas do mês</p><h3>{formatBRL(totalExpenses)}</h3><small>{expenses.filter((e) => e.type === 'DESPESA').length} despesas lançadas</small>
         </div>
         <div className="metric">
           <div className="metric-top"><div className="metric-icon"><TrendingUp /></div></div>
@@ -97,29 +99,30 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
       </div>
 
       <section className="panel" style={{ marginTop: 20, marginBottom: 20 }}>
-        <div className="panel-head"><div><h2>Nova despesa</h2><p>Registre um gasto e escolha o dia em que ocorreu</p></div></div>
+        <div className="panel-head"><div><h2>Novo lançamento</h2><p>Registre uma despesa ou uma receita extra e escolha o dia em que ocorreu</p></div></div>
         <div style={{ marginTop: 16 }}>
           <ExpenseForm />
         </div>
       </section>
 
       <section className="panel">
-        <div className="panel-head"><div><h2>Despesas de {monthLabel}</h2><p>{expenses.length} lançamentos</p></div></div>
+        <div className="panel-head"><div><h2>Lançamentos de {monthLabel}</h2><p>{expenses.length} lançamentos</p></div></div>
         <div className="table-wrap">
           <table>
-            <thead><tr><th>DATA</th><th>DESCRIÇÃO</th><th>VALOR</th><th></th></tr></thead>
+            <thead><tr><th>DATA</th><th>TIPO</th><th>DESCRIÇÃO</th><th>VALOR</th><th></th></tr></thead>
             <tbody>
               {expenses.map((e) => (
                 <ExpenseRow
                   key={e.id}
                   id={e.id}
+                  type={e.type}
                   description={e.description}
                   amount={Number(e.amount)}
                   date={new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(e.date)}
                 />
               ))}
               {expenses.length === 0 && (
-                <tr><td colSpan={4} style={{ textAlign: 'center', padding: 24 }}>Nenhuma despesa lançada neste mês.</td></tr>
+                <tr><td colSpan={5} style={{ textAlign: 'center', padding: 24 }}>Nenhum lançamento neste mês.</td></tr>
               )}
             </tbody>
           </table>
