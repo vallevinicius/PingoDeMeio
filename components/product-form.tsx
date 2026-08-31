@@ -3,13 +3,17 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { RecipeEditor } from '@/components/recipe-editor'
+import { CurrencyInput } from '@/components/currency-input'
 
 type Ingredient = { id: number; name: string; unit: string }
+
+const SIZE_OPTIONS = ['300ml', '500ml', '700ml', '1L']
 
 export function ProductForm({ ingredients }: { ingredients: Ingredient[] }) {
   const router = useRouter()
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
+  const [sizeLabel, setSizeLabel] = useState(SIZE_OPTIONS[0])
   const [rows, setRows] = useState<{ ingredientId: number; quantity: string }[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -25,6 +29,7 @@ export function ProductForm({ ingredients }: { ingredients: Ingredient[] }) {
         body: JSON.stringify({
           name,
           price: Number(price),
+          sizeLabel,
           recipe: rows.filter((r) => r.quantity).map((r) => ({ ingredientId: r.ingredientId, quantity: Number(r.quantity) })),
         }),
       })
@@ -35,6 +40,7 @@ export function ProductForm({ ingredients }: { ingredients: Ingredient[] }) {
       }
       setName('')
       setPrice('')
+      setSizeLabel(SIZE_OPTIONS[0])
       setRows([])
       router.refresh()
     } finally {
@@ -50,8 +56,16 @@ export function ProductForm({ ingredients }: { ingredients: Ingredient[] }) {
           <input value={name} onChange={(e) => setName(e.target.value)} required placeholder="Ex: Açaí com Morango" style={{ width: 240 }} />
         </div>
         <div className="field-group" style={{ margin: 0 }}>
-          <label>Preço (300ml)</label>
-          <input type="number" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} required style={{ width: 110 }} />
+          <label>Tamanho</label>
+          <select value={sizeLabel} onChange={(e) => setSizeLabel(e.target.value)} style={{ width: 100 }}>
+            {SIZE_OPTIONS.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+        <div className="field-group" style={{ margin: 0 }}>
+          <label>Preço ({sizeLabel})</label>
+          <CurrencyInput value={price} onChange={setPrice} required style={{ width: 110 }} />
         </div>
       </div>
 

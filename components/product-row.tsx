@@ -4,14 +4,18 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatBRL } from '@/lib/format'
 import { RecipeEditor } from '@/components/recipe-editor'
+import { CurrencyInput } from '@/components/currency-input'
 
 type Ingredient = { id: number; name: string; unit: string }
 type RecipeItem = { ingredientId: number; ingredientName: string; quantity: number; unit: string }
 
-export function ProductRow({ id, name, price, active, recipe, ingredients }: {
+const SIZE_OPTIONS = ['300ml', '500ml', '700ml', '1L']
+
+export function ProductRow({ id, name, price, sizeLabel, active, recipe, ingredients }: {
   id: number
   name: string
   price: number
+  sizeLabel: string
   active: boolean
   recipe: RecipeItem[]
   ingredients: Ingredient[]
@@ -21,6 +25,7 @@ export function ProductRow({ id, name, price, active, recipe, ingredients }: {
   const [rows, setRows] = useState(recipe.map((r) => ({ ingredientId: r.ingredientId, quantity: String(r.quantity) })))
   const [nameValue, setNameValue] = useState(name)
   const [priceValue, setPriceValue] = useState(String(price))
+  const [sizeValue, setSizeValue] = useState(sizeLabel)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -30,7 +35,7 @@ export function ProductRow({ id, name, price, active, recipe, ingredients }: {
       await fetch(`/api/products/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: nameValue, price: Number(priceValue) }),
+        body: JSON.stringify({ name: nameValue, price: Number(priceValue), sizeLabel: sizeValue }),
       })
       router.refresh()
     } finally {
@@ -93,8 +98,16 @@ export function ProductRow({ id, name, price, active, recipe, ingredients }: {
           <input value={nameValue} onChange={(e) => setNameValue(e.target.value)} style={{ width: 220 }} />
         </div>
         <div className="field-group" style={{ margin: 0 }}>
+          <label>Tamanho</label>
+          <select value={sizeValue} onChange={(e) => setSizeValue(e.target.value)} style={{ width: 90 }}>
+            {(SIZE_OPTIONS.includes(sizeValue) ? SIZE_OPTIONS : [sizeValue, ...SIZE_OPTIONS]).map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+        <div className="field-group" style={{ margin: 0 }}>
           <label>Preço</label>
-          <input type="number" step="0.01" value={priceValue} onChange={(e) => setPriceValue(e.target.value)} style={{ width: 100 }} />
+          <CurrencyInput value={priceValue} onChange={setPriceValue} style={{ width: 100 }} />
         </div>
         <button className="submit-btn" style={{ width: 'auto', padding: '10px 14px' }} disabled={saving} onClick={saveBasics}>Salvar</button>
         <button className="submit-btn" style={{ width: 'auto', padding: '10px 14px', background: active ? '#bf8d38' : 'var(--green)' }} disabled={saving} onClick={toggleActive}>
@@ -121,7 +134,7 @@ export function ProductRow({ id, name, price, active, recipe, ingredients }: {
       )}
 
       {error && <p style={{ color: '#b2465a', fontSize: 12, marginTop: 8 }}>{error}</p>}
-      <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8 }}>{formatBRL(price)} · 300ml</p>
+      <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8 }}>{formatBRL(price)} · {sizeLabel}</p>
     </div>
   )
 }

@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { formatBRL, formatOrderCode, formatTime, paymentLabel } from '@/lib/format'
 import { OrderStatusSelect } from '@/components/order-status-select'
+import { PaidToggle } from '@/components/paid-toggle'
+import { DeleteOrderButton } from '@/components/delete-order-button'
 import type { Prisma } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
@@ -15,6 +17,7 @@ export default async function PedidosPage({ searchParams }: { searchParams: Prom
     const possibleId = digits ? Number(digits) - 1000 : null
     where.OR = [
       { items: { some: { product: { name: { contains: q } } } } },
+      { customerName: { contains: q } },
       ...(possibleId && possibleId > 0 ? [{ id: possibleId }] : []),
     ]
   }
@@ -36,7 +39,7 @@ export default async function PedidosPage({ searchParams }: { searchParams: Prom
       <section className="panel">
         <form className="inline-form" style={{ marginTop: 0, marginBottom: 20 }}>
           <div className="field-group">
-            <label>Buscar por produto ou nº do pedido</label>
+            <label>Buscar por produto, cliente ou nº do pedido</label>
             <input name="q" defaultValue={q ?? ''} placeholder="Ex: Morango ou 1048" style={{ width: 240 }} />
           </div>
           <div className="field-group">
@@ -53,7 +56,7 @@ export default async function PedidosPage({ searchParams }: { searchParams: Prom
 
         <div className="table-wrap">
           <table>
-            <thead><tr><th>PEDIDO</th><th>HORÁRIO</th><th>PRODUTO</th><th>TOTAL</th><th>PAGAMENTO</th><th>STATUS</th></tr></thead>
+            <thead><tr><th>PEDIDO</th><th>HORÁRIO</th><th>CLIENTE</th><th>PRODUTO</th><th>TOTAL</th><th>PAGAMENTO</th><th>PAGO</th><th>STATUS</th><th></th></tr></thead>
             <tbody>
               {orders.map((order) => {
                 const item = order.items[0]
@@ -61,15 +64,18 @@ export default async function PedidosPage({ searchParams }: { searchParams: Prom
                   <tr key={order.id}>
                     <td><b>{formatOrderCode(order.id)}</b></td>
                     <td>{new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' }).format(order.createdAt)} {formatTime(order.createdAt)}</td>
+                    <td>{order.customerName ?? '—'}</td>
                     <td><b>{item?.product.name ?? '—'}</b><small>{item ? `${item.quantity}x` : ''}</small></td>
                     <td><b>{formatBRL(Number(order.total))}</b></td>
                     <td>{paymentLabel(order.paymentMethod)}</td>
+                    <td><PaidToggle id={order.id} paid={order.paid} /></td>
                     <td><OrderStatusSelect id={order.id} status={order.status} /></td>
+                    <td><DeleteOrderButton id={order.id} /></td>
                   </tr>
                 )
               })}
               {orders.length === 0 && (
-                <tr><td colSpan={6} style={{ textAlign: 'center', padding: 24 }}>Nenhum pedido encontrado.</td></tr>
+                <tr><td colSpan={9} style={{ textAlign: 'center', padding: 24 }}>Nenhum pedido encontrado.</td></tr>
               )}
             </tbody>
           </table>

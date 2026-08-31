@@ -3,10 +3,12 @@ import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
-  const { productId, paymentMethod, quantity } = body as {
+  const { productId, paymentMethod, quantity, paid, customerName } = body as {
     productId: number
     paymentMethod: 'PIX' | 'CARTAO' | 'DINHEIRO'
     quantity?: number
+    paid?: boolean
+    customerName?: string
   }
 
   if (!productId || !paymentMethod) {
@@ -27,6 +29,8 @@ export async function POST(request: NextRequest) {
     const created = await tx.order.create({
       data: {
         paymentMethod,
+        paid: paid ?? true,
+        customerName: customerName?.trim() || null,
         total: Number(product.price) * qty,
         items: {
           create: [

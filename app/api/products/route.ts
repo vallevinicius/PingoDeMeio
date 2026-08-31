@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
-  const { name, price, recipe } = await request.json() as {
+  const { name, price, sizeLabel, recipe } = await request.json() as {
     name: string
     price: number
+    sizeLabel?: string
     recipe: { ingredientId: number; quantity: number }[]
   }
 
@@ -16,6 +17,7 @@ export async function POST(request: NextRequest) {
     data: {
       name,
       price: Number(price),
+      ...(sizeLabel ? { sizeLabel } : {}),
       recipe: {
         create: (recipe ?? [])
           .filter((r) => r.ingredientId && r.quantity > 0)

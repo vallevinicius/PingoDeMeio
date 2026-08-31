@@ -20,7 +20,7 @@ export default async function Page() {
       <div className="welcome">
         <div>
           <p className="eyebrow">{todayLabel.toUpperCase()}</p>
-          <h1>{greeting}, João <span>✦</span></h1>
+          <h1>{greeting}, Pingo de Meio <span>✦</span></h1>
           <p className="subtext">Acompanhe o desempenho do Pingo de Meio hoje.</p>
         </div>
         <a className="export" href="/api/export/today"><TrendingUp size={16} /> Exportar relatório</a>

@@ -16,7 +16,7 @@ export default async function ProdutosPage() {
     <>
       <div className="page-header">
         <h1 className="section-title">Produtos</h1>
-        <p className="section-sub">Cadastre os sabores de açaí (garrafa 300ml). O Terminal PDV usa esta lista automaticamente.</p>
+        <p className="section-sub">Cadastre os sabores de açaí e o tamanho da garrafa. O Terminal PDV usa esta lista automaticamente.</p>
       </div>
 
       <section className="panel" style={{ marginBottom: 20 }}>
@@ -34,6 +34,7 @@ export default async function ProdutosPage() {
           id={p.id}
           name={p.name}
           price={Number(p.price)}
+          sizeLabel={p.sizeLabel}
           active={p.active}
           ingredients={ingredientOptions}
           recipe={p.recipe.map((r) => ({

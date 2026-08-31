@@ -9,6 +9,7 @@ export function StockRow({ id, name, unit, quantity, minQuantity, pct, status }:
   const router = useRouter()
   const [value, setValue] = useState(String(quantity))
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   async function save() {
     setSaving(true)
@@ -19,6 +20,22 @@ export function StockRow({ id, name, unit, quantity, minQuantity, pct, status }:
         body: JSON.stringify({ quantity: Number(value) }),
       })
       if (res.ok) router.refresh()
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function remove() {
+    setSaving(true)
+    setError('')
+    try {
+      const res = await fetch(`/api/ingredients/${id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const body = await res.json()
+        setError(body.error ?? 'Erro ao excluir')
+        return
+      }
+      router.refresh()
     } finally {
       setSaving(false)
     }
@@ -44,7 +61,11 @@ export function StockRow({ id, name, unit, quantity, minQuantity, pct, status }:
         <button className="submit-btn" style={{ width: 'auto', padding: '10px 16px' }} disabled={saving} onClick={save}>
           {saving ? 'Salvando...' : 'Atualizar'}
         </button>
+        <button className="submit-btn" style={{ width: 'auto', padding: '10px 16px', background: '#b2465a' }} disabled={saving} onClick={remove}>
+          Excluir
+        </button>
       </div>
+      {error && <p style={{ color: '#b2465a', fontSize: 12, marginTop: 8 }}>{error}</p>}
     </div>
   )
 }

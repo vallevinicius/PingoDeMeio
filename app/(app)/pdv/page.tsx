@@ -12,7 +12,7 @@ export default async function PdvPage() {
         <h1 className="section-title">Terminal PDV</h1>
         <p className="section-sub">Registre um novo pedido no caixa.</p>
       </div>
-      <PdvForm products={products.map((p) => ({ id: p.id, name: p.name, price: Number(p.price) }))} />
+      <PdvForm products={products.map((p) => ({ id: p.id, name: p.name, price: Number(p.price), sizeLabel: p.sizeLabel }))} />
     </>
   )
 }

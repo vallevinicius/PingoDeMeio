@@ -4,11 +4,12 @@ import { prisma } from '@/lib/prisma'
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { name, price, active } = await request.json()
+  const { name, price, sizeLabel, active } = await request.json()
 
-  const data: { name?: string; price?: number; active?: boolean } = {}
+  const data: { name?: string; price?: number; sizeLabel?: string; active?: boolean } = {}
   if (name !== undefined) data.name = name
   if (price !== undefined) data.price = Number(price)
+  if (sizeLabel !== undefined) data.sizeLabel = sizeLabel
   if (active !== undefined) data.active = active
 
   const product = await prisma.product.update({ where: { id: Number(id) }, data })

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatBRL, formatOrderCode } from '@/lib/format'
 
-type Product = { id: number; name: string; price: number }
+type Product = { id: number; name: string; price: number; sizeLabel: string }
 
 const paymentOptions = [
   { value: 'PIX', label: 'Pix' },
@@ -15,8 +15,10 @@ const paymentOptions = [
 export function PdvForm({ products }: { products: Product[] }) {
   const router = useRouter()
   const [productId, setProductId] = useState<number | null>(products[0]?.id ?? null)
+  const [customerName, setCustomerName] = useState('')
   const [quantity, setQuantity] = useState(1)
   const [payment, setPayment] = useState('PIX')
+  const [paid, setPaid] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState<{ type: 'ok' | 'error'; text: string } | null>(null)
 
@@ -30,7 +32,7 @@ export function PdvForm({ products }: { products: Product[] }) {
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId, paymentMethod: payment, quantity }),
+        body: JSON.stringify({ productId, paymentMethod: payment, quantity, paid, customerName: customerName.trim() || undefined }),
       })
       const body = await res.json()
       if (!res.ok) {
@@ -39,6 +41,8 @@ export function PdvForm({ products }: { products: Product[] }) {
       }
       setMessage({ type: 'ok', text: `Pedido ${formatOrderCode(body.order.id)} criado com sucesso!` })
       setQuantity(1)
+      setPaid(true)
+      setCustomerName('')
       router.refresh()
     } finally {
       setSubmitting(false)
@@ -56,7 +60,7 @@ export function PdvForm({ products }: { products: Product[] }) {
   return (
     <div className="pdv-grid">
       <section className="panel">
-        <div className="panel-head"><div><h2>1. Escolha o sabor</h2><p>Açaí 300ml</p></div></div>
+        <div className="panel-head"><div><h2>1. Escolha o sabor</h2><p>Açaí</p></div></div>
         <div className="product-grid" style={{ marginTop: 16 }}>
           {products.map((p) => (
             <button
@@ -66,7 +70,7 @@ export function PdvForm({ products }: { products: Product[] }) {
               onClick={() => setProductId(p.id)}
             >
               <b>{p.name}</b>
-              <span>300ml</span>
+              <span>{p.sizeLabel}</span>
               <b>{formatBRL(p.price)}</b>
             </button>
           ))}
@@ -77,6 +81,11 @@ export function PdvForm({ products }: { products: Product[] }) {
         <div className="panel-head"><div><h2>2. Finalizar</h2><p>Quantidade e pagamento</p></div></div>
 
         <div className="field-group" style={{ marginTop: 16 }}>
+          <label>Nome do cliente (opcional)</label>
+          <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Ex: Maria" />
+        </div>
+
+        <div className="field-group">
           <label>Quantidade</label>
           <input type="number" min={1} value={quantity} onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))} />
         </div>
@@ -86,6 +95,14 @@ export function PdvForm({ products }: { products: Product[] }) {
           <select value={payment} onChange={(e) => setPayment(e.target.value)}>
             {paymentOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
+        </div>
+
+        <div className="field-group">
+          <label>Situação do pagamento</label>
+          <div className="chip-grid">
+            <button type="button" className={`chip ${paid ? 'selected' : ''}`} onClick={() => setPaid(true)}>Já pagou</button>
+            <button type="button" className={`chip ${!paid ? 'selected' : ''}`} onClick={() => setPaid(false)}>Ainda não pagou</button>
+          </div>
         </div>
 
         {selectedProduct && (

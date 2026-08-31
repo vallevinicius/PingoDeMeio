@@ -54,8 +54,10 @@ model ProductIngredient {
 model Order {
   id            Int           @id @default(autoincrement())
   createdAt     DateTime      @default(now())
+  customerName  String?
   paymentMethod PaymentMethod
   status        OrderStatus   @default(PREPARANDO)
+  paid          Boolean       @default(true)
   total         Decimal       @db.Decimal(10, 2)
   items         OrderItem[]
 }
@@ -68,4 +70,12 @@ model OrderItem {
   productId Int
   quantity  Int      @default(1)
   unitPrice Decimal  @db.Decimal(10, 2)
+}
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+  description String
+  amount      Decimal  @db.Decimal(10, 2)
+  date        DateTime
+  createdAt   DateTime @default(now())
 }

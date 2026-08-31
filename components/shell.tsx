@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   Bell, CalendarDays, ChevronDown, CircleDollarSign, ClipboardList,
   LayoutDashboard, ListTree, LogOut, Menu, Package, Plus, Search, Settings, ShoppingBag,
-  Sparkles, X,
+  Sparkles, Wallet, X,
 } from 'lucide-react'
 
 const logo = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/pingo%20de%20meio%20%281%29-VXuSvY2mNyRFLACwO7DcYHOs05nRrt.png'
@@ -18,6 +18,7 @@ const navItems = [
   { label: 'Produtos', icon: ListTree, href: '/produtos' },
   { label: 'Terminal PDV', icon: ShoppingBag, href: '/pdv' },
   { label: 'Histórico de pedidos', icon: ClipboardList, href: '/pedidos' },
+  { label: 'Financeiro', icon: Wallet, href: '/financeiro' },
 ]
 
 export function Shell({ children }: { children: React.ReactNode }) {
@@ -50,8 +51,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </nav>
         <div className="sidebar-tip"><Sparkles size={17} /><div><b>Fechamento do dia</b><span>Confira seus resultados antes de encerrar.</span></div></div>
         <div className="profile">
-          <div className="avatar">JP</div>
-          <div><b>João Pedro</b><span>Administrador</span></div>
+          <div className="avatar">PM</div>
+          <div><b>Pingo de Meio</b><span>Administrador</span></div>
           <button onClick={logout} aria-label="Sair" title="Sair" style={{ marginLeft: 'auto', background: 'transparent', border: 0, color: '#bcaec4', display: 'flex' }}>
             <LogOut size={15} />
           </button>
@@ -66,7 +67,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <button className="date-filter"><CalendarDays size={16} /> {today} <ChevronDown size={15} /></button>
             <button className="location"><span className="location-dot" /> Loja principal <ChevronDown size={15} /></button>
             <button className="icon-button" aria-label="Notificações"><Bell size={19} /><i /></button>
-            <div className="top-avatar">JP</div>
+            <div className="top-avatar">PM</div>
           </div>
         </header>
         <div className="page-content">{children}</div>
