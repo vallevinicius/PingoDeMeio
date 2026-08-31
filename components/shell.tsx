@@ -38,7 +38,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <aside className={`sidebar ${menuOpen ? 'sidebar-open' : ''}`}>
         <button className="mobile-close" onClick={() => setMenuOpen(false)} aria-label="Fechar menu"><X size={20} /></button>
         <div className="brand"><img src={logo} alt="Pingo de Meio" /><div><strong>Pingo de</strong><span>MEIO</span></div></div>
-        <Link href="/pdv" className="new-order"><Plus size={18} /> Novo pedido</Link>
+        <Link href="/pdv" onClick={() => setMenuOpen(false)} className="new-order"><Plus size={18} /> Novo pedido</Link>
         <nav aria-label="Navegação principal">
           <p className="nav-label">MENU PRINCIPAL</p>
           {navItems.map(({ label, icon: Icon, href }) => (
