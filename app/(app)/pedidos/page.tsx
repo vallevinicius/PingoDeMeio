@@ -1,3 +1,5 @@
+import Link from 'next/link'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
 import { formatBRL, formatOrderCode, formatTime, paymentLabel, TIME_ZONE } from '@/lib/format'
 import { OrderStatusSelect } from '@/components/order-status-select'
@@ -8,8 +10,11 @@ import type { Prisma } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
 
-export default async function PedidosPage({ searchParams }: { searchParams: Promise<{ status?: string; q?: string }> }) {
-  const { status, q } = await searchParams
+const PAGE_SIZE = 15
+
+export default async function PedidosPage({ searchParams }: { searchParams: Promise<{ status?: string; q?: string; page?: string }> }) {
+  const { status, q, page: pageParam } = await searchParams
+  const currentPage = Math.max(1, Number(pageParam) || 1)
 
   const where: Prisma.OrderWhereInput = {}
   if (status) where.status = status as Prisma.OrderWhereInput['status']
@@ -23,15 +28,28 @@ export default async function PedidosPage({ searchParams }: { searchParams: Prom
     ]
   }
 
-  const [orders, products] = await Promise.all([
+  function buildHref(page: number) {
+    const params = new URLSearchParams()
+    if (q) params.set('q', q)
+    if (status) params.set('status', status)
+    if (page > 1) params.set('page', String(page))
+    const qs = params.toString()
+    return qs ? `/pedidos?${qs}` : '/pedidos'
+  }
+
+  const [orders, ordersCount, products] = await Promise.all([
     prisma.order.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      take: 100,
+      skip: (currentPage - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
       include: { items: { include: { product: true } } },
     }),
+    prisma.order.count({ where }),
     prisma.product.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
   ])
+
+  const totalPages = Math.max(1, Math.ceil(ordersCount / PAGE_SIZE))
 
   return (
     <>
@@ -95,6 +113,28 @@ export default async function PedidosPage({ searchParams }: { searchParams: Prom
             </tbody>
           </table>
         </div>
+
+        {totalPages > 1 && (
+          <div className="inline-form" style={{ marginTop: 16, alignItems: 'center', justifyContent: 'center' }}>
+            {currentPage > 1 ? (
+              <Link href={buildHref(currentPage - 1)} style={{ display: 'inline-flex', color: '#6d6370', textDecoration: 'none' }} aria-label="Página anterior">
+                <ChevronLeft size={18} />
+              </Link>
+            ) : (
+              <span style={{ display: 'inline-flex', color: '#6d6370', opacity: 0.3 }}><ChevronLeft size={18} /></span>
+            )}
+            <span style={{ fontSize: 12, color: 'var(--muted)', minWidth: 110, textAlign: 'center' }}>
+              Página {currentPage} de {totalPages}
+            </span>
+            {currentPage < totalPages ? (
+              <Link href={buildHref(currentPage + 1)} style={{ display: 'inline-flex', color: '#6d6370', textDecoration: 'none' }} aria-label="Próxima página">
+                <ChevronRight size={18} />
+              </Link>
+            ) : (
+              <span style={{ display: 'inline-flex', color: '#6d6370', opacity: 0.3 }}><ChevronRight size={18} /></span>
+            )}
+          </div>
+        )}
       </section>
     </>
   )

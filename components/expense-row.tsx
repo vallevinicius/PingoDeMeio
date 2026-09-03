@@ -30,7 +30,7 @@ export function ExpenseRow({ id, type, description, amount, date }: {
     <tr>
       <td>{date}</td>
       <td><span className={`status ${isIncome ? 'done' : 'cancelled'}`}>{isIncome ? 'Receita' : 'Despesa'}</span></td>
-      <td><b>{description}</b></td>
+      <td><span className={`entry-dot ${isIncome ? 'income' : 'expense'}`} /><b style={{ display: 'inline' }}>{description}</b></td>
       <td><b style={{ color: isIncome ? 'var(--green)' : '#b2465a' }}>{isIncome ? '+' : '-'} {formatBRL(amount)}</b></td>
       <td>
         <button type="button" className="link-button" style={{ fontSize: 12, color: '#b2465a' }} disabled={removing} onClick={remove}>

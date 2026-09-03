@@ -38,9 +38,33 @@ button { cursor: pointer; }
 .section-sub { color: var(--muted); font-size: 12px; margin: 0 0 20px; }
 .pdv-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; }
 .page-header { margin-bottom: 24px; }
-.stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
 @media (max-width: 900px) { .pdv-grid { grid-template-columns: 1fr; } }
-@media (max-width: 720px) { .stats-row { grid-template-columns: 1fr; } }
+
+.hero-icon { width: 44px; height: 44px; border-radius: 12px; }
+.hero-icon svg { width: 20px; }
+.tint-green { background: #e7f1e8; color: var(--green); }
+.tint-red { background: #fbecef; color: #b2465a; }
+.tint-gold { background: #f8eedc; color: var(--gold); }
+.tint-berry { background: #f4e9f2; color: var(--berry); }
+.tint-lilac { background: #f1eaf5; color: #9d6fae; }
+.fin-card { position: relative; overflow: hidden; }
+.fin-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+.fin-card.accent-green::before { background: var(--green); }
+.fin-card.accent-red::before { background: #b2465a; }
+.fin-card.accent-gold::before { background: var(--gold); }
+.fin-card.accent-purple::before { background: var(--purple); }
+.trend.negative { color: #b2465a; }
+.pay-row { display: flex; align-items: center; gap: 14px; padding: 14px 0; }
+.pay-row + .pay-row { border-top: 1px solid #f4f0ee; }
+.pay-icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex-shrink: 0; }
+.pay-body { flex: 1; min-width: 0; }
+.type-toggle { display: flex; gap: 8px; }
+.type-toggle button { flex: 1; border: 1px solid var(--border); background: #fff; border-radius: 10px; padding: 11px 14px; font-size: 12px; font-weight: 700; color: var(--muted); }
+.type-toggle button.expense.selected { background: #fbecef; border-color: #edc3cc; color: #b2465a; }
+.type-toggle button.income.selected { background: #e7f1e8; border-color: #c1d9c3; color: var(--green); }
+.entry-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 7px; flex-shrink: 0; }
+.entry-dot.income { background: var(--green); }
+.entry-dot.expense { background: #b2465a; }
 
 .login-page { min-height: 100vh; display: grid; place-items: center; background: var(--purple); padding: 20px; }
 .login-card { width: 100%; max-width: 360px; background: #fff; border-radius: 20px; padding: 36px 32px; box-shadow: var(--shadow); }

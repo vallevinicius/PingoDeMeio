@@ -1,15 +1,10 @@
 import { prisma } from '@/lib/prisma'
-import { brParts, formatOrderCode, paymentLabel, startOfDayBR, stockStatus } from '@/lib/format'
+import { brParts, formatOrderCode, paymentLabel, pctChange, startOfDayBR, stockStatus } from '@/lib/format'
 
 function dayRange(date: Date) {
   const start = startOfDayBR(date)
   const end = new Date(start.getTime() + 24 * 60 * 60 * 1000)
   return { start, end }
-}
-
-function pctChange(current: number, previous: number) {
-  if (previous <= 0) return null
-  return ((current - previous) / previous) * 100
 }
 
 const CHART_HOURS = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]

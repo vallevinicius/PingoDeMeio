@@ -1,10 +1,9 @@
 import Link from 'next/link'
 import { Banknote, ChevronLeft, ChevronRight, CircleDollarSign, CreditCard, QrCode, TrendingDown, TrendingUp } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
-import { brParts, formatBRL, paymentLabel, TIME_ZONE, zonedDate } from '@/lib/format'
+import { brParts, formatBRL, paymentLabel, pctChange, TIME_ZONE, zonedDate } from '@/lib/format'
 import { ExpenseForm } from '@/components/expense-form'
 import { ExpenseRow } from '@/components/expense-row'
-import { AccountBalanceBox } from '@/components/account-balance-box'
 import { AllTimeRevenueBox } from '@/components/all-time-revenue-box'
 
 export const dynamic = 'force-dynamic'
@@ -40,6 +39,17 @@ const TABS = [
   { label: 'Receitas', value: 'RECEITA' as const },
 ]
 
+function TrendBadge({ pct, goodDirection }: { pct: number | null; goodDirection: 'up' | 'down' }) {
+  if (pct === null) return null
+  const isUp = pct >= 0
+  const isGood = goodDirection === 'up' ? isUp : !isUp
+  return (
+    <span className={`trend ${isGood ? '' : 'negative'}`}>
+      {isUp ? '↗' : '↘'} {Math.abs(pct).toFixed(1)}%
+    </span>
+  )
+}
+
 export default async function FinanceiroPage({ searchParams }: { searchParams: Promise<{ view?: string; month?: string; year?: string; type?: string; page?: string }> }) {
   const { view: viewParam, month: monthParam, year: yearParam, type: typeParam, page: pageParam } = await searchParams
   const view = viewParam === 'year' ? 'year' : 'month'
@@ -51,6 +61,10 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
   const start = view === 'year' ? zonedDate(year, 0) : zonedDate(monthYear, month - 1)
   const end = view === 'year' ? zonedDate(year + 1, 0) : zonedDate(monthYear, month)
   const isCurrentPeriod = end > new Date()
+
+  const prevMonth = shiftMonth(monthYear, month, -1)
+  const nextMonth = shiftMonth(monthYear, month, 1)
+  const prevStart = view === 'year' ? zonedDate(year - 1, 0) : zonedDate(prevMonth.year, prevMonth.month - 1)
 
   function periodHref(p: { view: 'month' | 'year'; year: number; month?: number }) {
     const params = new URLSearchParams()
@@ -73,7 +87,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
     return `/financeiro?${params.toString()}`
   }
 
-  const [orders, allExpenses, entriesCount, entries, allTimeOrders, allTimeEntries, firstOrder, firstExpense] = await Promise.all([
+  const [orders, allExpenses, entriesCount, entries, allTimeOrders, allTimeEntries, firstOrder, firstExpense, prevOrders, prevExpenses] = await Promise.all([
     prisma.order.findMany({
       where: { createdAt: { gte: start, lt: end }, status: { not: 'CANCELADO' } },
       select: { total: true, paymentMethod: true },
@@ -94,6 +108,14 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
     prisma.expense.groupBy({ by: ['type'], _sum: { amount: true } }),
     prisma.order.findFirst({ orderBy: { createdAt: 'asc' }, select: { createdAt: true } }),
     prisma.expense.findFirst({ where: { type: 'RECEITA' }, orderBy: { date: 'asc' }, select: { date: true } }),
+    prisma.order.findMany({
+      where: { createdAt: { gte: prevStart, lt: start }, status: { not: 'CANCELADO' } },
+      select: { total: true },
+    }),
+    prisma.expense.findMany({
+      where: { date: { gte: prevStart, lt: start } },
+      select: { type: true, amount: true },
+    }),
   ])
 
   const ordersRevenue = orders.reduce((sum, o) => sum + Number(o.total), 0)
@@ -104,8 +126,19 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
 
   const allTimeRevenue = Number(allTimeOrders._sum.total ?? 0)
     + Number(allTimeEntries.find((e) => e.type === 'RECEITA')?._sum.amount ?? 0)
-  const allTimeExpenses = Number(allTimeEntries.find((e) => e.type === 'DESPESA')?._sum.amount ?? 0)
-  const accountBalance = allTimeRevenue - allTimeExpenses
+
+  const prevOrdersRevenue = prevOrders.reduce((sum, o) => sum + Number(o.total), 0)
+  const prevManualIncome = prevExpenses.filter((e) => e.type === 'RECEITA').reduce((sum, e) => sum + Number(e.amount), 0)
+  const prevTotalExpenses = prevExpenses.filter((e) => e.type === 'DESPESA').reduce((sum, e) => sum + Number(e.amount), 0)
+  const prevRevenue = prevOrdersRevenue + prevManualIncome
+  const prevProfit = prevRevenue - prevTotalExpenses
+
+  const revenueTrendPct = pctChange(revenue, prevRevenue)
+  const expensesTrendPct = pctChange(totalExpenses, prevTotalExpenses)
+  const profitTrendPct = pctChange(profit, prevProfit)
+
+  const PAYMENT_COLORS = { PIX: 'var(--berry)', CARTAO: '#9d6fae', DINHEIRO: 'var(--gold)' } as const
+  const PAYMENT_ICON_TINT = { PIX: 'tint-berry', CARTAO: 'tint-lilac', DINHEIRO: 'tint-gold' } as const
 
   const paymentBreakdown = (['PIX', 'CARTAO', 'DINHEIRO'] as const).map((method) => {
     const methodOrders = orders.filter((o) => o.paymentMethod === method)
@@ -113,6 +146,8 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
     return {
       method,
       label: paymentLabel(method),
+      color: PAYMENT_COLORS[method],
+      iconTint: PAYMENT_ICON_TINT[method],
       total,
       count: methodOrders.length,
       pct: ordersRevenue > 0 ? Math.round((total / ordersRevenue) * 100) : 0,
@@ -127,8 +162,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
 
   const periodLabel = view === 'year' ? String(year) : new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: TIME_ZONE }).format(start)
   const periodNoun = view === 'year' ? 'ano' : 'mês'
-  const prevMonth = shiftMonth(monthYear, month, -1)
-  const nextMonth = shiftMonth(monthYear, month, 1)
+  const comparisonNoun = view === 'year' ? 'ano anterior' : 'mês anterior'
 
   return (
     <>
@@ -168,23 +202,34 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
         </div>
       </div>
 
-      <div className="stats-row">
-        <AccountBalanceBox amount={accountBalance} />
+      <div style={{ marginBottom: 20 }}>
         <AllTimeRevenueBox amount={allTimeRevenue} since={sinceDate} />
       </div>
 
       <div className="metrics" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-        <div className="metric">
-          <div className="metric-top"><div className="metric-icon"><CircleDollarSign /></div></div>
-          <p>Receita do {periodNoun}</p><h3>{formatBRL(revenue)}</h3><small>{orders.length} pedidos válidos{manualIncome > 0 ? ` + ${formatBRL(manualIncome)} extra` : ''}</small>
+        <div className="metric fin-card accent-green">
+          <div className="metric-top">
+            <div className="metric-icon tint-green"><CircleDollarSign /></div>
+            <TrendBadge pct={revenueTrendPct} goodDirection="up" />
+          </div>
+          <p>Receita do {periodNoun}</p><h3>{formatBRL(revenue)}</h3>
+          <small>{orders.length} pedidos válidos{manualIncome > 0 ? ` + ${formatBRL(manualIncome)} extra` : ''}{revenueTrendPct !== null ? ` · vs. ${comparisonNoun}` : ''}</small>
         </div>
-        <div className="metric">
-          <div className="metric-top"><div className="metric-icon"><TrendingDown /></div></div>
-          <p>Despesas do {periodNoun}</p><h3>{formatBRL(totalExpenses)}</h3><small>{allExpenses.filter((e) => e.type === 'DESPESA').length} despesas lançadas</small>
+        <div className="metric fin-card accent-red">
+          <div className="metric-top">
+            <div className="metric-icon tint-red"><TrendingDown /></div>
+            <TrendBadge pct={expensesTrendPct} goodDirection="down" />
+          </div>
+          <p>Despesas do {periodNoun}</p><h3>{formatBRL(totalExpenses)}</h3>
+          <small>{allExpenses.filter((e) => e.type === 'DESPESA').length} despesas lançadas{expensesTrendPct !== null ? ` · vs. ${comparisonNoun}` : ''}</small>
         </div>
-        <div className="metric">
-          <div className="metric-top"><div className="metric-icon"><TrendingUp /></div></div>
-          <p>Lucro do {periodNoun}</p><h3 style={{ color: profit >= 0 ? 'var(--green)' : '#b2465a' }}>{formatBRL(profit)}</h3><small>receita − despesas</small>
+        <div className="metric fin-card accent-purple">
+          <div className="metric-top">
+            <div className={`metric-icon ${profit >= 0 ? 'tint-green' : 'tint-red'}`}><TrendingUp /></div>
+            <TrendBadge pct={profitTrendPct} goodDirection="up" />
+          </div>
+          <p>Lucro do {periodNoun}</p><h3 style={{ color: profit >= 0 ? 'var(--green)' : '#b2465a' }}>{formatBRL(profit)}</h3>
+          <small>receita − despesas{profitTrendPct !== null ? ` · vs. ${comparisonNoun}` : ''}</small>
         </div>
       </div>
 
@@ -193,20 +238,24 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
         {ordersRevenue === 0 ? (
           <p className="subtext" style={{ marginTop: 18 }}>Nenhum pedido pago neste período ainda.</p>
         ) : (
-          paymentBreakdown.map((p) => (
-            <div className="stock-row" key={p.method}>
-              <div className="stock-info">
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  {p.method === 'PIX' && <QrCode size={13} />}
-                  {p.method === 'CARTAO' && <CreditCard size={13} />}
-                  {p.method === 'DINHEIRO' && <Banknote size={13} />}
-                  {p.label} <small style={{ color: '#a39aa4' }}>({p.count} pedido{p.count === 1 ? '' : 's'})</small>
-                </span>
-                <b>{formatBRL(p.total)} <small style={{ color: '#a39aa4' }}>{p.pct}%</small></b>
+          <div style={{ marginTop: 4 }}>
+            {paymentBreakdown.map((p) => (
+              <div className="pay-row" key={p.method}>
+                <div className={`pay-icon ${p.iconTint}`}>
+                  {p.method === 'PIX' && <QrCode size={15} />}
+                  {p.method === 'CARTAO' && <CreditCard size={15} />}
+                  {p.method === 'DINHEIRO' && <Banknote size={15} />}
+                </div>
+                <div className="pay-body">
+                  <div className="stock-info">
+                    <span>{p.label} <small style={{ color: '#a39aa4' }}>({p.count} pedido{p.count === 1 ? '' : 's'})</small></span>
+                    <b>{formatBRL(p.total)} <small style={{ color: '#a39aa4' }}>{p.pct}%</small></b>
+                  </div>
+                  <div className="progress"><i style={{ width: `${p.pct}%`, background: p.color }} /></div>
+                </div>
               </div>
-              <div className="progress"><i style={{ width: `${p.pct}%`, background: 'var(--purple)' }} /></div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </section>
 

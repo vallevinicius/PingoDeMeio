@@ -46,3 +46,8 @@ export function stockStatus(quantity: number, minQuantity: number) {
   const status = pct < 40 ? 'low' : pct < 75 ? 'medium' : 'good'
   return { pct: Math.round(pct), status }
 }
+
+export function pctChange(current: number, previous: number) {
+  if (previous <= 0) return null
+  return ((current - previous) / previous) * 100
+}

@@ -47,9 +47,9 @@ export function ExpenseForm() {
     <form onSubmit={submit}>
       <div className="field-group" style={{ marginBottom: 16 }}>
         <label>Tipo de lançamento</label>
-        <div className="chip-grid">
-          <button type="button" className={`chip ${type === 'DESPESA' ? 'selected' : ''}`} onClick={() => setType('DESPESA')}>Despesa</button>
-          <button type="button" className={`chip ${type === 'RECEITA' ? 'selected' : ''}`} onClick={() => setType('RECEITA')}>Receita extra</button>
+        <div className="type-toggle">
+          <button type="button" className={`expense ${type === 'DESPESA' ? 'selected' : ''}`} onClick={() => setType('DESPESA')}>↘ Despesa</button>
+          <button type="button" className={`income ${type === 'RECEITA' ? 'selected' : ''}`} onClick={() => setType('RECEITA')}>↗ Receita extra</button>
         </div>
       </div>
 
@@ -72,7 +72,11 @@ export function ExpenseForm() {
           <label>Data</label>
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required style={{ width: 150 }} />
         </div>
-        <button className="submit-btn" style={{ width: 'auto', padding: '10px 18px' }} disabled={saving || !description || !amount}>
+        <button
+          className="submit-btn"
+          style={{ width: 'auto', padding: '10px 18px', background: type === 'DESPESA' ? '#b2465a' : 'var(--green)' }}
+          disabled={saving || !description || !amount}
+        >
           {saving ? 'Adicionando...' : type === 'DESPESA' ? 'Adicionar despesa' : 'Adicionar receita'}
         </button>
       </div>
