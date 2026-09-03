@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { EntryType } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import { zonedDate } from '@/lib/format'
 
 export async function POST(request: NextRequest) {
   const { description, amount, date, type } = await request.json() as {
@@ -18,11 +19,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'type inválido' }, { status: 400 })
   }
 
+  const [y, m, d] = date.split('-').map(Number)
+  // Anchored at noon Brasília time for the chosen calendar day, independent of the server's own timezone.
+  const entryDate = new Date(zonedDate(y, m - 1, d).getTime() + 12 * 60 * 60 * 1000)
+
   const expense = await prisma.expense.create({
     data: {
       description,
       amount: Number(amount),
-      date: new Date(`${date}T12:00:00`),
+      date: entryDate,
       type: (type as EntryType) ?? 'DESPESA',
     },
   })

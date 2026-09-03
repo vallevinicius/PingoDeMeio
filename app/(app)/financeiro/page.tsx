@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import { Banknote, ChevronLeft, ChevronRight, CircleDollarSign, CreditCard, QrCode, TrendingDown, TrendingUp } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
-import { formatBRL, paymentLabel } from '@/lib/format'
+import { brParts, formatBRL, paymentLabel, TIME_ZONE, zonedDate } from '@/lib/format'
 import { ExpenseForm } from '@/components/expense-form'
 import { ExpenseRow } from '@/components/expense-row'
 import { AccountBalanceBox } from '@/components/account-balance-box'
+import { AllTimeRevenueBox } from '@/components/all-time-revenue-box'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,8 +14,13 @@ function parseMonth(month?: string) {
     const [year, m] = month.split('-').map(Number)
     return { year, month: m }
   }
-  const now = new Date()
-  return { year: now.getFullYear(), month: now.getMonth() + 1 }
+  const now = brParts(new Date())
+  return { year: now.year, month: now.month + 1 }
+}
+
+function parseYear(yearParam: string | undefined, fallback: number) {
+  const y = Number(yearParam)
+  return Number.isInteger(y) && y > 1900 && y < 3000 ? y : fallback
 }
 
 function monthKey(year: number, month: number) {
@@ -34,21 +40,32 @@ const TABS = [
   { label: 'Receitas', value: 'RECEITA' as const },
 ]
 
-export default async function FinanceiroPage({ searchParams }: { searchParams: Promise<{ month?: string; type?: string; page?: string }> }) {
-  const { month: monthParam, type: typeParam, page: pageParam } = await searchParams
-  const { year, month } = parseMonth(monthParam)
+export default async function FinanceiroPage({ searchParams }: { searchParams: Promise<{ view?: string; month?: string; year?: string; type?: string; page?: string }> }) {
+  const { view: viewParam, month: monthParam, year: yearParam, type: typeParam, page: pageParam } = await searchParams
+  const view = viewParam === 'year' ? 'year' : 'month'
+  const { year: monthYear, month } = parseMonth(monthParam)
+  const year = parseYear(yearParam, monthYear)
   const typeFilter = typeParam === 'DESPESA' || typeParam === 'RECEITA' ? typeParam : undefined
   const currentPage = Math.max(1, Number(pageParam) || 1)
 
-  const start = new Date(year, month - 1, 1)
-  const end = new Date(year, month, 1)
-  const prev = shiftMonth(year, month, -1)
-  const next = shiftMonth(year, month, 1)
-  const isCurrentMonth = end > new Date()
+  const start = view === 'year' ? zonedDate(year, 0) : zonedDate(monthYear, month - 1)
+  const end = view === 'year' ? zonedDate(year + 1, 0) : zonedDate(monthYear, month)
+  const isCurrentPeriod = end > new Date()
+
+  function periodHref(p: { view: 'month' | 'year'; year: number; month?: number }) {
+    const params = new URLSearchParams()
+    params.set('view', p.view)
+    if (p.view === 'year') params.set('year', String(p.year))
+    else params.set('month', monthKey(p.year, p.month!))
+    if (typeFilter) params.set('type', typeFilter)
+    return `/financeiro?${params.toString()}`
+  }
 
   function buildHref(overrides: { type?: string; page?: number }) {
     const params = new URLSearchParams()
-    params.set('month', monthKey(year, month))
+    params.set('view', view)
+    if (view === 'year') params.set('year', String(year))
+    else params.set('month', monthKey(monthYear, month))
     const type = 'type' in overrides ? overrides.type : typeFilter
     if (type) params.set('type', type)
     const page = overrides.page ?? currentPage
@@ -56,7 +73,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
     return `/financeiro?${params.toString()}`
   }
 
-  const [orders, allExpenses, entriesCount, entries, allTimeOrders, allTimeEntries] = await Promise.all([
+  const [orders, allExpenses, entriesCount, entries, allTimeOrders, allTimeEntries, firstOrder, firstExpense] = await Promise.all([
     prisma.order.findMany({
       where: { createdAt: { gte: start, lt: end }, status: { not: 'CANCELADO' } },
       select: { total: true, paymentMethod: true },
@@ -75,6 +92,8 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
     }),
     prisma.order.aggregate({ where: { status: { not: 'CANCELADO' } }, _sum: { total: true } }),
     prisma.expense.groupBy({ by: ['type'], _sum: { amount: true } }),
+    prisma.order.findFirst({ orderBy: { createdAt: 'asc' }, select: { createdAt: true } }),
+    prisma.expense.findFirst({ where: { type: 'RECEITA' }, orderBy: { date: 'asc' }, select: { date: true } }),
   ])
 
   const ordersRevenue = orders.reduce((sum, o) => sum + Number(o.total), 0)
@@ -102,60 +121,77 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
 
   const totalPages = Math.max(1, Math.ceil(entriesCount / PAGE_SIZE))
 
-  const monthLabel = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(start)
+  const sinceDate = [firstOrder?.createdAt, firstExpense?.date]
+    .filter((d): d is Date => Boolean(d))
+    .sort((a, b) => a.getTime() - b.getTime())[0] ?? null
+
+  const periodLabel = view === 'year' ? String(year) : new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric', timeZone: TIME_ZONE }).format(start)
+  const periodNoun = view === 'year' ? 'ano' : 'mês'
+  const prevMonth = shiftMonth(monthYear, month, -1)
+  const nextMonth = shiftMonth(monthYear, month, 1)
 
   return (
     <>
       <div className="page-header">
         <h1 className="section-title">Financeiro</h1>
-        <p className="section-sub">Receitas, despesas e lucro por mês.</p>
+        <p className="section-sub">Receitas, despesas e lucro por mês ou por ano.</p>
       </div>
 
-      <div className="inline-form" style={{ marginTop: 0, marginBottom: 20, alignItems: 'center' }}>
-        <Link
-          scroll={false}
-          href={`/financeiro?month=${monthKey(prev.year, prev.month)}`}
-          aria-label="Mês anterior"
-          style={{ display: 'inline-flex', color: '#6d6370', textDecoration: 'none' }}
-        >
-          <ChevronLeft size={18} />
-        </Link>
-        <h2 style={{ margin: 0, fontSize: 16, textTransform: 'capitalize', minWidth: 160, textAlign: 'center' }}>{monthLabel}</h2>
-        {isCurrentMonth ? (
-          <span style={{ display: 'inline-flex', color: '#6d6370', opacity: 0.3 }}><ChevronRight size={18} /></span>
-        ) : (
+      <div className="inline-form" style={{ marginTop: 0, marginBottom: 20, alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Link
             scroll={false}
-            href={`/financeiro?month=${monthKey(next.year, next.month)}`}
-            aria-label="Próximo mês"
+            href={view === 'year' ? periodHref({ view: 'year', year: year - 1 }) : periodHref({ view: 'month', year: prevMonth.year, month: prevMonth.month })}
+            aria-label={view === 'year' ? 'Ano anterior' : 'Mês anterior'}
             style={{ display: 'inline-flex', color: '#6d6370', textDecoration: 'none' }}
           >
-            <ChevronRight size={18} />
+            <ChevronLeft size={18} />
           </Link>
-        )}
+          <h2 style={{ margin: 0, fontSize: 16, textTransform: 'capitalize', minWidth: 160, textAlign: 'center' }}>{periodLabel}</h2>
+          {isCurrentPeriod ? (
+            <span style={{ display: 'inline-flex', color: '#6d6370', opacity: 0.3 }}><ChevronRight size={18} /></span>
+          ) : (
+            <Link
+              scroll={false}
+              href={view === 'year' ? periodHref({ view: 'year', year: year + 1 }) : periodHref({ view: 'month', year: nextMonth.year, month: nextMonth.month })}
+              aria-label={view === 'year' ? 'Próximo ano' : 'Próximo mês'}
+              style={{ display: 'inline-flex', color: '#6d6370', textDecoration: 'none' }}
+            >
+              <ChevronRight size={18} />
+            </Link>
+          )}
+        </div>
+
+        <div className="chip-grid">
+          <Link scroll={false} href={periodHref({ view: 'month', year: monthYear, month })} className={`chip ${view === 'month' ? 'selected' : ''}`} style={{ textDecoration: 'none' }}>Mês</Link>
+          <Link scroll={false} href={periodHref({ view: 'year', year })} className={`chip ${view === 'year' ? 'selected' : ''}`} style={{ textDecoration: 'none' }}>Ano</Link>
+        </div>
       </div>
 
-      <AccountBalanceBox amount={accountBalance} />
+      <div className="stats-row">
+        <AccountBalanceBox amount={accountBalance} />
+        <AllTimeRevenueBox amount={allTimeRevenue} since={sinceDate} />
+      </div>
 
       <div className="metrics" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
         <div className="metric">
           <div className="metric-top"><div className="metric-icon"><CircleDollarSign /></div></div>
-          <p>Receita do mês</p><h3>{formatBRL(revenue)}</h3><small>{orders.length} pedidos válidos{manualIncome > 0 ? ` + ${formatBRL(manualIncome)} extra` : ''}</small>
+          <p>Receita do {periodNoun}</p><h3>{formatBRL(revenue)}</h3><small>{orders.length} pedidos válidos{manualIncome > 0 ? ` + ${formatBRL(manualIncome)} extra` : ''}</small>
         </div>
         <div className="metric">
           <div className="metric-top"><div className="metric-icon"><TrendingDown /></div></div>
-          <p>Despesas do mês</p><h3>{formatBRL(totalExpenses)}</h3><small>{allExpenses.filter((e) => e.type === 'DESPESA').length} despesas lançadas</small>
+          <p>Despesas do {periodNoun}</p><h3>{formatBRL(totalExpenses)}</h3><small>{allExpenses.filter((e) => e.type === 'DESPESA').length} despesas lançadas</small>
         </div>
         <div className="metric">
           <div className="metric-top"><div className="metric-icon"><TrendingUp /></div></div>
-          <p>Lucro do mês</p><h3 style={{ color: profit >= 0 ? 'var(--green)' : '#b2465a' }}>{formatBRL(profit)}</h3><small>receita − despesas</small>
+          <p>Lucro do {periodNoun}</p><h3 style={{ color: profit >= 0 ? 'var(--green)' : '#b2465a' }}>{formatBRL(profit)}</h3><small>receita − despesas</small>
         </div>
       </div>
 
       <section className="panel" style={{ marginBottom: 20 }}>
-        <div className="panel-head"><div><h2>Meios de pagamento</h2><p>Como o dinheiro entrou em {monthLabel}</p></div></div>
+        <div className="panel-head"><div><h2>Meios de pagamento</h2><p>Como o dinheiro entrou em {periodLabel}</p></div></div>
         {ordersRevenue === 0 ? (
-          <p className="subtext" style={{ marginTop: 18 }}>Nenhum pedido pago neste mês ainda.</p>
+          <p className="subtext" style={{ marginTop: 18 }}>Nenhum pedido pago neste período ainda.</p>
         ) : (
           paymentBreakdown.map((p) => (
             <div className="stock-row" key={p.method}>
@@ -182,7 +218,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
       </section>
 
       <section className="panel">
-        <div className="panel-head"><div><h2>Lançamentos de {monthLabel}</h2><p>{entriesCount} lançamentos</p></div></div>
+        <div className="panel-head"><div><h2>Lançamentos de {periodLabel}</h2><p>{entriesCount} lançamentos</p></div></div>
 
         <div className="chip-grid" style={{ marginTop: 16 }}>
           {TABS.map((tab) => (
@@ -209,7 +245,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
                   type={e.type}
                   description={e.description}
                   amount={Number(e.amount)}
-                  date={new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(e.date)}
+                  date={new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: TIME_ZONE }).format(e.date)}
                 />
               ))}
               {entries.length === 0 && (

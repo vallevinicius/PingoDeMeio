@@ -1,6 +1,6 @@
 import { CircleDollarSign, ShoppingBag, Zap } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
-import { formatBRL, formatOrderCode, formatTime, paymentLabel } from '@/lib/format'
+import { formatBRL, formatOrderCode, formatTime, paymentLabel, startOfDayBR } from '@/lib/format'
 import { OrderStatusSelect } from '@/components/order-status-select'
 import { PaidToggle } from '@/components/paid-toggle'
 import { DeleteOrderButton } from '@/components/delete-order-button'
@@ -8,10 +8,8 @@ import { DeleteOrderButton } from '@/components/delete-order-button'
 export const dynamic = 'force-dynamic'
 
 export default async function VendasDoDiaPage() {
-  const start = new Date()
-  start.setHours(0, 0, 0, 0)
-  const end = new Date(start)
-  end.setDate(end.getDate() + 1)
+  const start = startOfDayBR(new Date())
+  const end = new Date(start.getTime() + 24 * 60 * 60 * 1000)
 
   const orders = await prisma.order.findMany({
     where: { createdAt: { gte: start, lt: end } },

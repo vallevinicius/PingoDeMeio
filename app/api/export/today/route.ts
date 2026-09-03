@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { formatOrderCode, paymentLabel, statusLabel } from '@/lib/format'
+import { formatOrderCode, paymentLabel, startOfDayBR, statusLabel, TIME_ZONE } from '@/lib/format'
 
 export async function GET() {
-  const start = new Date()
-  start.setHours(0, 0, 0, 0)
-  const end = new Date(start)
-  end.setDate(end.getDate() + 1)
+  const start = startOfDayBR(new Date())
+  const end = new Date(start.getTime() + 24 * 60 * 60 * 1000)
 
   const orders = await prisma.order.findMany({
     where: { createdAt: { gte: start, lt: end } },
@@ -19,7 +17,7 @@ export async function GET() {
     const item = order.items[0]
     return [
       formatOrderCode(order.id),
-      order.createdAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      order.createdAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: TIME_ZONE }),
       item ? `${item.product.name}` : '',
       item ? String(item.quantity) : '',
       Number(order.total).toFixed(2).replace('.', ','),

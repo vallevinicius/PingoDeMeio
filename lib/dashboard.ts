@@ -1,10 +1,9 @@
 import { prisma } from '@/lib/prisma'
-import { formatOrderCode, paymentLabel, stockStatus } from '@/lib/format'
+import { brParts, formatOrderCode, paymentLabel, startOfDayBR, stockStatus } from '@/lib/format'
 
 function dayRange(date: Date) {
-  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-  const end = new Date(start)
-  end.setDate(end.getDate() + 1)
+  const start = startOfDayBR(date)
+  const end = new Date(start.getTime() + 24 * 60 * 60 * 1000)
   return { start, end }
 }
 
@@ -18,8 +17,7 @@ const FLAVOR_COLORS = ['berry', 'lilac', 'gold', 'sage']
 
 export async function getDashboardData(referenceDate: Date = new Date()) {
   const { start: todayStart, end: todayEnd } = dayRange(referenceDate)
-  const yesterdayRef = new Date(referenceDate)
-  yesterdayRef.setDate(yesterdayRef.getDate() - 1)
+  const yesterdayRef = new Date(todayStart.getTime() - 24 * 60 * 60 * 1000)
   const { start: yesterdayStart, end: yesterdayEnd } = dayRange(yesterdayRef)
 
   const [todayOrders, yesterdayOrders, lowStockIngredients, recentOrdersRaw] = await Promise.all([
@@ -57,7 +55,7 @@ export async function getDashboardData(referenceDate: Date = new Date()) {
 
   const hourlyRevenue = new Map<number, number>()
   for (const order of todayOrders) {
-    const hour = order.createdAt.getHours()
+    const hour = brParts(order.createdAt).hour
     hourlyRevenue.set(hour, (hourlyRevenue.get(hour) ?? 0) + Number(order.total))
   }
   const hourlySales = CHART_HOURS.map((hour) => ({ hour, revenue: hourlyRevenue.get(hour) ?? 0 }))

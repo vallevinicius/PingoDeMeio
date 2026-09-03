@@ -3,7 +3,7 @@ import { formatBRL } from '@/lib/format'
 
 export function AccountBalanceBox({ amount }: { amount: number }) {
   return (
-    <section className="panel" style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 14 }}>
+    <section className="panel" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
       <div className="metric-icon"><Wallet /></div>
       <div>
         <p style={{ margin: 0, color: '#786f7c', fontSize: 11 }}>Atualmente na conta</p>

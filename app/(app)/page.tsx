@@ -1,6 +1,6 @@
 import { CircleDollarSign, ShoppingBag, Sparkles, TrendingUp, Zap } from 'lucide-react'
 import { getDashboardData } from '@/lib/dashboard'
-import { formatBRL, formatTime } from '@/lib/format'
+import { brParts, formatBRL, formatTime, TIME_ZONE } from '@/lib/format'
 import { OrderStatusBadge } from '@/components/order-status-badge'
 
 export const dynamic = 'force-dynamic'
@@ -9,10 +9,10 @@ export default async function Page() {
   const data = await getDashboardData()
 
   const todayLabel = new Intl.DateTimeFormat('pt-BR', {
-    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
+    weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', timeZone: TIME_ZONE,
   }).format(new Date())
 
-  const hour = new Date().getHours()
+  const hour = brParts(new Date()).hour
   const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'
 
   return (
