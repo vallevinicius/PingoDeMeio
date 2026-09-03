@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   Bell, CalendarDays, ChevronDown, CircleDollarSign, ClipboardList,
-  LayoutDashboard, ListTree, LogOut, Menu, Package, Plus, Search, Settings, ShoppingBag,
+  LayoutDashboard, ListTree, LogOut, Menu, Package, Plus, Search, ShoppingBag,
   Sparkles, Wallet, X,
 } from 'lucide-react'
 
@@ -46,8 +46,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <Icon size={18} />{label}
             </Link>
           ))}
-          <p className="nav-label nav-label-bottom">CONFIGURAÇÕES</p>
-          <Link href="/configuracoes" onClick={() => setMenuOpen(false)} className={`nav-item ${pathname === '/configuracoes' ? 'active' : ''}`}><Settings size={18} /> Configurações</Link>
         </nav>
         <div className="sidebar-tip"><Sparkles size={17} /><div><b>Fechamento do dia</b><span>Confira seus resultados antes de encerrar.</span></div></div>
         <div className="profile">

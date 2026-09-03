@@ -27,10 +27,10 @@ export default async function Page() {
       </div>
 
       <div className="metrics">
-        <Metric icon={<CircleDollarSign />} label="Receita de hoje" value={formatBRL(data.revenue)} trend={data.revenueTrendPct} note="vs. ontem" />
-        <Metric icon={<ShoppingBag />} label="Açaís vendidos" value={String(data.itemsSold)} trend={data.itemsSoldTrendPct} note="vs. ontem" />
-        <Metric icon={<Zap />} label="Ticket médio" value={formatBRL(data.avgTicket)} trend={data.avgTicketTrendPct} note="vs. ontem" />
-        <Metric icon={<Sparkles />} label="Mais pedido" value={data.topProduct?.name ?? '—'} note={data.topProduct ? `${data.topProduct.count} pedidos hoje` : 'Sem pedidos hoje'} />
+        <Metric tint="tint-green" icon={<CircleDollarSign />} label="Receita de hoje" value={formatBRL(data.revenue)} trend={data.revenueTrendPct} note="vs. ontem" />
+        <Metric tint="tint-gold" icon={<ShoppingBag />} label="Açaís vendidos" value={String(data.itemsSold)} trend={data.itemsSoldTrendPct} note="vs. ontem" />
+        <Metric tint="tint-berry" icon={<Zap />} label="Ticket médio" value={formatBRL(data.avgTicket)} trend={data.avgTicketTrendPct} note="vs. ontem" />
+        <Metric tint="tint-lilac" icon={<Sparkles />} label="Mais pedido" value={data.topProduct?.name ?? '—'} note={data.topProduct ? `${data.topProduct.count} pedidos hoje` : 'Sem pedidos hoje'} />
       </div>
 
       <div className="main-grid">
@@ -140,13 +140,13 @@ function donutGradient(dist: { color: string; pct: number }[]) {
   return `conic-gradient(${stops.join(', ')})`
 }
 
-function Metric({ icon, label, value, trend, note }: { icon: React.ReactNode; label: string; value: string; trend?: number | null; note: string }) {
+function Metric({ icon, label, value, trend, note, tint }: { icon: React.ReactNode; label: string; value: string; trend?: number | null; note: string; tint: string }) {
   return (
     <div className="metric">
       <div className="metric-top">
-        <div className="metric-icon">{icon}</div>
+        <div className={`metric-icon ${tint}`}>{icon}</div>
         {trend !== undefined && trend !== null && (
-          <span className="trend">{trend >= 0 ? '↗' : '↘'} {Math.abs(trend).toFixed(1)}%</span>
+          <span className={`trend ${trend < 0 ? 'negative' : ''}`}>{trend >= 0 ? '↗' : '↘'} {Math.abs(trend).toFixed(1)}%</span>
         )}
       </div>
       <p>{label}</p>

@@ -29,16 +29,16 @@ export default async function VendasDoDiaPage() {
       </div>
 
       <div className="metrics" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-        <div className="metric">
-          <div className="metric-top"><div className="metric-icon"><CircleDollarSign /></div></div>
+        <div className="metric fin-card accent-green">
+          <div className="metric-top"><div className="metric-icon tint-green"><CircleDollarSign /></div></div>
           <p>Receita de hoje</p><h3>{formatBRL(revenue)}</h3><small>{validOrders.length} pedidos válidos</small>
         </div>
-        <div className="metric">
-          <div className="metric-top"><div className="metric-icon"><ShoppingBag /></div></div>
+        <div className="metric fin-card accent-gold">
+          <div className="metric-top"><div className="metric-icon tint-gold"><ShoppingBag /></div></div>
           <p>Total de pedidos</p><h3>{orders.length}</h3><small>incluindo cancelados</small>
         </div>
-        <div className="metric">
-          <div className="metric-top"><div className="metric-icon"><Zap /></div></div>
+        <div className="metric fin-card accent-berry">
+          <div className="metric-top"><div className="metric-icon tint-berry"><Zap /></div></div>
           <p>Ticket médio</p><h3>{formatBRL(avgTicket)}</h3><small>por pedido válido</small>
         </div>
       </div>
