@@ -83,6 +83,7 @@ export async function getDashboardData(referenceDate: Date = new Date()) {
       time: order.createdAt,
       productName: item ? item.product.name : '—',
       quantity: item?.quantity ?? 1,
+      extraFlavors: order.items.length - 1,
       total: Number(order.total),
       payment: paymentLabel(order.paymentMethod),
       status: order.status,

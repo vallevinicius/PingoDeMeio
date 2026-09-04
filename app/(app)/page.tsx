@@ -111,7 +111,10 @@ export default async function Page() {
                   <tr key={o.id}>
                     <td><b>{o.code}</b></td>
                     <td>{formatTime(o.time)}</td>
-                    <td><b>{o.productName}</b><small>{o.quantity > 1 ? `${o.quantity} unidades` : '1 unidade'}</small></td>
+                    <td>
+                      <b>{o.productName}</b>
+                      <small>{o.quantity > 1 ? `${o.quantity} unidades` : '1 unidade'}{o.extraFlavors > 0 ? ` +${o.extraFlavors} sabor${o.extraFlavors > 1 ? 'es' : ''}` : ''}</small>
+                    </td>
                     <td><b>{formatBRL(o.total)}</b><small>{o.payment}</small></td>
                     <td><OrderStatusBadge status={o.status} /></td>
                   </tr>

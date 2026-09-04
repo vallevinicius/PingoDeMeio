@@ -14,12 +14,11 @@ export async function GET() {
 
   const header = ['Pedido', 'Horário', 'Sabor', 'Quantidade', 'Total', 'Pagamento', 'Status']
   const rows = orders.map((order) => {
-    const item = order.items[0]
     return [
       formatOrderCode(order.id),
       order.createdAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: TIME_ZONE }),
-      item ? `${item.product.name}` : '',
-      item ? String(item.quantity) : '',
+      order.items.map((i) => i.product.name).join(', '),
+      order.items.map((i) => i.quantity).join(', '),
       Number(order.total).toFixed(2).replace('.', ','),
       paymentLabel(order.paymentMethod),
       statusLabel(order.status),
