@@ -17,11 +17,11 @@ export async function getDashboardData(referenceDate: Date = new Date()) {
 
   const [todayOrders, yesterdayOrders, lowStockIngredients, recentOrdersRaw] = await Promise.all([
     prisma.order.findMany({
-      where: { createdAt: { gte: todayStart, lt: todayEnd }, status: { not: 'CANCELADO' } },
+      where: { createdAt: { gte: todayStart, lt: todayEnd }, status: 'CONCLUIDO', paid: true },
       include: { items: { include: { product: true } } },
     }),
     prisma.order.findMany({
-      where: { createdAt: { gte: yesterdayStart, lt: yesterdayEnd }, status: { not: 'CANCELADO' } },
+      where: { createdAt: { gte: yesterdayStart, lt: yesterdayEnd }, status: 'CONCLUIDO', paid: true },
       include: { items: true },
     }),
     prisma.ingredient.findMany({ orderBy: { quantity: 'asc' } }),

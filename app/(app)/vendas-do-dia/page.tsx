@@ -17,7 +17,7 @@ export default async function VendasDoDiaPage() {
     include: { items: { include: { product: true } } },
   })
 
-  const validOrders = orders.filter((o) => o.status !== 'CANCELADO')
+  const validOrders = orders.filter((o) => o.status === 'CONCLUIDO' && o.paid)
   const revenue = validOrders.reduce((sum, o) => sum + Number(o.total), 0)
   const avgTicket = validOrders.length ? revenue / validOrders.length : 0
 

@@ -89,7 +89,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
 
   const [orders, allExpenses, entriesCount, entries, allTimeOrders, allTimeEntries, firstOrder, firstExpense, prevOrders, prevExpenses] = await Promise.all([
     prisma.order.findMany({
-      where: { createdAt: { gte: start, lt: end }, status: { not: 'CANCELADO' } },
+      where: { createdAt: { gte: start, lt: end }, status: 'CONCLUIDO', paid: true },
       select: { total: true, paymentMethod: true },
     }),
     prisma.expense.findMany({
@@ -104,12 +104,12 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
       skip: (currentPage - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
-    prisma.order.aggregate({ where: { status: { not: 'CANCELADO' } }, _sum: { total: true } }),
+    prisma.order.aggregate({ where: { status: 'CONCLUIDO', paid: true }, _sum: { total: true } }),
     prisma.expense.groupBy({ by: ['type'], _sum: { amount: true } }),
     prisma.order.findFirst({ orderBy: { createdAt: 'asc' }, select: { createdAt: true } }),
     prisma.expense.findFirst({ where: { type: 'RECEITA' }, orderBy: { date: 'asc' }, select: { date: true } }),
     prisma.order.findMany({
-      where: { createdAt: { gte: prevStart, lt: start }, status: { not: 'CANCELADO' } },
+      where: { createdAt: { gte: prevStart, lt: start }, status: 'CONCLUIDO', paid: true },
       select: { total: true },
     }),
     prisma.expense.findMany({
