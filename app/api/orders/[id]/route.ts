@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { status, paid, customerName, paymentMethod, productId, quantity } = await request.json()
+  const { status, paid, customerName, paymentMethod, productId, quantity, unitPrice } = await request.json()
 
   const data: Prisma.OrderUpdateInput = {}
 
@@ -27,7 +27,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 
   const order = await prisma.$transaction(async (tx) => {
-    if (productId !== undefined || quantity !== undefined) {
+    if (productId !== undefined || quantity !== undefined || unitPrice !== undefined) {
       const existing = await tx.order.findUnique({ where: { id: Number(id) }, include: { items: true } })
       const item = existing?.items[0]
       if (!item) return tx.order.update({ where: { id: Number(id) }, data })
@@ -38,11 +38,17 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         : await tx.product.findUnique({ where: { id: item.productId } })
       if (!product) throw new Error('Sabor não encontrado')
 
+      const price = unitPrice !== undefined && Number(unitPrice) >= 0 ? Number(unitPrice) : Number(product.price)
+
       await tx.orderItem.update({
         where: { id: item.id },
-        data: { productId: product.id, quantity: qty, unitPrice: product.price },
+        data: { productId: product.id, quantity: qty, unitPrice: price },
       })
-      data.total = Number(product.price) * qty
+
+      const otherItemsTotal = existing.items
+        .slice(1)
+        .reduce((sum, i) => sum + Number(i.unitPrice) * i.quantity, 0)
+      data.total = price * qty + otherItemsTotal
     }
 
     return tx.order.update({ where: { id: Number(id) }, data })

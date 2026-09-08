@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Pencil } from 'lucide-react'
+import { CurrencyInput } from '@/components/currency-input'
 
 type Product = { id: number; name: string; price: number; sizeLabel: string }
 
@@ -16,7 +17,7 @@ type Order = {
   id: number
   customerName: string | null
   paymentMethod: string
-  items: { productId: number; quantity: number }[]
+  items: { productId: number; quantity: number; unitPrice: number }[]
 }
 
 export function EditOrderButton({ order, products }: { order: Order; products: Product[] }) {
@@ -29,15 +30,19 @@ export function EditOrderButton({ order, products }: { order: Order; products: P
   const [paymentMethod, setPaymentMethod] = useState(order.paymentMethod)
   const [productId, setProductId] = useState(order.items[0]?.productId ?? products[0]?.id)
   const [quantity, setQuantity] = useState(order.items[0]?.quantity ?? 1)
+  const [unitPrice, setUnitPrice] = useState(String(order.items[0]?.unitPrice ?? products[0]?.price ?? 0))
 
   function openModal() {
     setCustomerName(order.customerName ?? '')
     setPaymentMethod(order.paymentMethod)
     setProductId(order.items[0]?.productId ?? products[0]?.id)
     setQuantity(order.items[0]?.quantity ?? 1)
+    setUnitPrice(String(order.items[0]?.unitPrice ?? products[0]?.price ?? 0))
     setError(null)
     setOpen(true)
   }
+
+  const singleItem = order.items.length <= 1
 
   async function save() {
     setSaving(true)
@@ -46,7 +51,11 @@ export function EditOrderButton({ order, products }: { order: Order; products: P
       const res = await fetch(`/api/orders/${order.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerName, paymentMethod, productId, quantity }),
+        body: JSON.stringify(
+          singleItem
+            ? { customerName, paymentMethod, productId, quantity, unitPrice: Number(unitPrice) }
+            : { customerName, paymentMethod },
+        ),
       })
       const body = await res.json()
       if (!res.ok) {
@@ -82,17 +91,38 @@ export function EditOrderButton({ order, products }: { order: Order; products: P
               <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Ex: Maria" />
             </div>
 
-            <div className="field-group">
-              <label>Sabor</label>
-              <select value={productId} onChange={(e) => setProductId(Number(e.target.value))}>
-                {products.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.sizeLabel})</option>)}
-              </select>
-            </div>
+            {singleItem ? (
+              <>
+                <div className="field-group">
+                  <label>Sabor</label>
+                  <select
+                    value={productId}
+                    onChange={(e) => {
+                      const id = Number(e.target.value)
+                      setProductId(id)
+                      const product = products.find((p) => p.id === id)
+                      if (product) setUnitPrice(String(product.price))
+                    }}
+                  >
+                    {products.map((p) => <option key={p.id} value={p.id}>{p.name} ({p.sizeLabel})</option>)}
+                  </select>
+                </div>
 
-            <div className="field-group">
-              <label>Quantidade</label>
-              <input type="number" min={1} value={quantity} onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))} />
-            </div>
+                <div className="field-group">
+                  <label>Quantidade</label>
+                  <input type="number" min={1} value={quantity} onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))} />
+                </div>
+
+                <div className="field-group">
+                  <label>Preço unitário (ajuste para desconto)</label>
+                  <CurrencyInput value={unitPrice} onChange={setUnitPrice} />
+                </div>
+              </>
+            ) : (
+              <p className="subtext" style={{ marginBottom: 16 }}>
+                Este pedido tem {order.items.length} sabores diferentes — para alterar os itens, exclua e crie um novo pelo Terminal PDV.
+              </p>
+            )}
 
             <div className="field-group">
               <label>Forma de pagamento</label>

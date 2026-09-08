@@ -17,7 +17,7 @@ export default async function VendasDoDiaPage() {
     include: { items: { include: { product: true } } },
   })
 
-  const validOrders = orders.filter((o) => o.status !== 'CANCELADO')
+  const validOrders = orders.filter((o) => o.status === 'CONCLUIDO' && o.paid)
   const revenue = validOrders.reduce((sum, o) => sum + Number(o.total), 0)
   const avgTicket = validOrders.length ? revenue / validOrders.length : 0
 
@@ -51,12 +51,16 @@ export default async function VendasDoDiaPage() {
             <tbody>
               {orders.map((order) => {
                 const item = order.items[0]
+                const extraFlavors = order.items.length - 1
                 return (
                   <tr key={order.id}>
                     <td><b>{formatOrderCode(order.id)}</b></td>
                     <td>{formatTime(order.createdAt)}</td>
                     <td>{order.customerName ?? '—'}</td>
-                    <td><b>{item?.product.name ?? '—'}</b><small>{item ? `${item.quantity}x` : ''}</small></td>
+                    <td>
+                      <b>{item?.product.name ?? '—'}</b>
+                      <small>{item ? `${item.quantity}x` : ''}{extraFlavors > 0 ? ` +${extraFlavors} sabor${extraFlavors > 1 ? 'es' : ''}` : ''}</small>
+                    </td>
                     <td><b>{formatBRL(Number(order.total))}</b></td>
                     <td>{paymentLabel(order.paymentMethod)}</td>
                     <td><PaidToggle id={order.id} paid={order.paid} /></td>

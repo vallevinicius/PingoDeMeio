@@ -82,12 +82,16 @@ export default async function PedidosPage({ searchParams }: { searchParams: Prom
             <tbody>
               {orders.map((order) => {
                 const item = order.items[0]
+                const extraFlavors = order.items.length - 1
                 return (
                   <tr key={order.id}>
                     <td><b>{formatOrderCode(order.id)}</b></td>
                     <td>{new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', timeZone: TIME_ZONE }).format(order.createdAt)} {formatTime(order.createdAt)}</td>
                     <td>{order.customerName ?? '—'}</td>
-                    <td><b>{item?.product.name ?? '—'}</b><small>{item ? `${item.quantity}x` : ''}</small></td>
+                    <td>
+                      <b>{item?.product.name ?? '—'}</b>
+                      <small>{item ? `${item.quantity}x` : ''}{extraFlavors > 0 ? ` +${extraFlavors} sabor${extraFlavors > 1 ? 'es' : ''}` : ''}</small>
+                    </td>
                     <td><b>{formatBRL(Number(order.total))}</b></td>
                     <td>{paymentLabel(order.paymentMethod)}</td>
                     <td><PaidToggle id={order.id} paid={order.paid} /></td>
@@ -98,7 +102,7 @@ export default async function PedidosPage({ searchParams }: { searchParams: Prom
                           id: order.id,
                           customerName: order.customerName,
                           paymentMethod: order.paymentMethod,
-                          items: order.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+                          items: order.items.map((i) => ({ productId: i.productId, quantity: i.quantity, unitPrice: Number(i.unitPrice) })),
                         }}
                         products={products.map((p) => ({ id: p.id, name: p.name, price: Number(p.price), sizeLabel: p.sizeLabel }))}
                       />
