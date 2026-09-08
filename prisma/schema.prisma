@@ -85,3 +85,12 @@ model Expense {
   date        DateTime
   createdAt   DateTime  @default(now())
 }
+
+model Withdrawal {
+  id          Int      @id @default(autoincrement())
+  partnerName String
+  amount      Decimal  @db.Decimal(10, 2)
+  description String?
+  date        DateTime
+  createdAt   DateTime @default(now())
+}

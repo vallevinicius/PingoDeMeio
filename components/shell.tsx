@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   Bell, CalendarDays, ChevronDown, CircleDollarSign, ClipboardList,
-  LayoutDashboard, ListTree, LogOut, Menu, Package, Plus, Search, ShoppingBag,
+  HandCoins, LayoutDashboard, ListTree, LogOut, Menu, Package, Plus, Search, ShoppingBag,
   Sparkles, Wallet, X,
 } from 'lucide-react'
 
@@ -19,6 +19,7 @@ const navItems = [
   { label: 'Terminal PDV', icon: ShoppingBag, href: '/pdv' },
   { label: 'Histórico de pedidos', icon: ClipboardList, href: '/pedidos' },
   { label: 'Financeiro', icon: Wallet, href: '/financeiro' },
+  { label: 'Retiradas', icon: HandCoins, href: '/retiradas' },
 ]
 
 export function Shell({ children }: { children: React.ReactNode }) {
