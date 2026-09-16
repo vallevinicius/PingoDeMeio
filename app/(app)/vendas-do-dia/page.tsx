@@ -4,6 +4,7 @@ import { formatBRL, formatOrderCode, formatTime, paymentLabel, startOfDayBR } fr
 import { OrderStatusSelect } from '@/components/order-status-select'
 import { PaidToggle } from '@/components/paid-toggle'
 import { DeleteOrderButton } from '@/components/delete-order-button'
+import { EditOrderButton } from '@/components/edit-order-button'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,11 +12,14 @@ export default async function VendasDoDiaPage() {
   const start = startOfDayBR(new Date())
   const end = new Date(start.getTime() + 24 * 60 * 60 * 1000)
 
-  const orders = await prisma.order.findMany({
-    where: { createdAt: { gte: start, lt: end } },
-    orderBy: { createdAt: 'desc' },
-    include: { items: { include: { product: true } } },
-  })
+  const [orders, products] = await Promise.all([
+    prisma.order.findMany({
+      where: { createdAt: { gte: start, lt: end } },
+      orderBy: { createdAt: 'desc' },
+      include: { items: { include: { product: true } } },
+    }),
+    prisma.product.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
+  ])
 
   const validOrders = orders.filter((o) => o.status === 'CONCLUIDO' && o.paid)
   const revenue = validOrders.reduce((sum, o) => sum + Number(o.total), 0)
@@ -47,7 +51,7 @@ export default async function VendasDoDiaPage() {
         <div className="panel-head"><div><h2>Pedidos de hoje</h2><p>Ordenados do mais recente para o mais antigo</p></div></div>
         <div className="table-wrap">
           <table>
-            <thead><tr><th>PEDIDO</th><th>HORÁRIO</th><th>CLIENTE</th><th>PRODUTO</th><th>TOTAL</th><th>PAGAMENTO</th><th>PAGO</th><th>STATUS</th><th></th></tr></thead>
+            <thead><tr><th>PEDIDO</th><th>HORÁRIO</th><th>CLIENTE</th><th>PRODUTO</th><th>TOTAL</th><th>PAGAMENTO</th><th>PAGO</th><th>STATUS</th><th></th><th></th></tr></thead>
             <tbody>
               {orders.map((order) => {
                 const item = order.items[0]
@@ -65,12 +69,23 @@ export default async function VendasDoDiaPage() {
                     <td>{paymentLabel(order.paymentMethod)}</td>
                     <td><PaidToggle id={order.id} paid={order.paid} /></td>
                     <td><OrderStatusSelect id={order.id} status={order.status} /></td>
+                    <td>
+                      <EditOrderButton
+                        order={{
+                          id: order.id,
+                          customerName: order.customerName,
+                          paymentMethod: order.paymentMethod,
+                          items: order.items.map((i) => ({ productId: i.productId, quantity: i.quantity, unitPrice: Number(i.unitPrice) })),
+                        }}
+                        products={products.map((p) => ({ id: p.id, name: p.name, price: Number(p.price), sizeLabel: p.sizeLabel }))}
+                      />
+                    </td>
                     <td><DeleteOrderButton id={order.id} /></td>
                   </tr>
                 )
               })}
               {orders.length === 0 && (
-                <tr><td colSpan={9} style={{ textAlign: 'center', padding: 24 }}>Nenhum pedido hoje ainda.</td></tr>
+                <tr><td colSpan={10} style={{ textAlign: 'center', padding: 24 }}>Nenhum pedido hoje ainda.</td></tr>
               )}
             </tbody>
           </table>
