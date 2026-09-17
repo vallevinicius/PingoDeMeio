@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Banknote, ChevronLeft, ChevronRight, CircleDollarSign, CreditCard, QrCode, TrendingDown, TrendingUp } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
-import { brParts, formatBRL, paymentLabel, pctChange, TIME_ZONE, zonedDate } from '@/lib/format'
+import { brParts, formatBRL, paymentLabel, pctChange, TIME_ZONE, toDateInputValue, zonedDate } from '@/lib/format'
 import { ExpenseForm } from '@/components/expense-form'
 import { ExpenseRow } from '@/components/expense-row'
 import { AllTimeRevenueBox } from '@/components/all-time-revenue-box'
@@ -308,6 +308,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
                   description={e.description}
                   amount={Number(e.amount)}
                   date={new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: TIME_ZONE }).format(e.date)}
+                  dateISO={toDateInputValue(e.date)}
                 />
               ))}
               {entries.length === 0 && (
