@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   Bell, CalendarCheck, CalendarDays, ChevronDown, CircleDollarSign, ClipboardList,
   HandCoins, LayoutDashboard, ListTree, LogOut, Menu, Package, Plus, Search, ShoppingBag,
-  Sparkles, Wallet, X,
+  Sparkles, Users, Wallet, X,
 } from 'lucide-react'
 
 const logo = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/pingo%20de%20meio%20%281%29-VXuSvY2mNyRFLACwO7DcYHOs05nRrt.png'
@@ -24,6 +24,7 @@ const navGroups = [
       { label: 'Vendas do dia', icon: CircleDollarSign, href: '/vendas-do-dia' },
       { label: 'Terminal PDV', icon: ShoppingBag, href: '/pdv' },
       { label: 'Histórico de pedidos', icon: ClipboardList, href: '/pedidos' },
+      { label: 'Clientes', icon: Users, href: '/clientes' },
     ],
   },
   {

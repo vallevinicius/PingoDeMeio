@@ -20,14 +20,15 @@ enum OrderStatus {
 }
 
 model Product {
-  id         Int                 @id @default(autoincrement())
-  name       String
-  sizeLabel  String              @default("300ml")
-  price      Decimal             @db.Decimal(10, 2)
-  active     Boolean             @default(true)
-  createdAt  DateTime            @default(now())
-  recipe     ProductIngredient[]
-  orderItems OrderItem[]
+  id          Int                 @id @default(autoincrement())
+  name        String
+  sizeLabel   String              @default("300ml")
+  price       Decimal             @db.Decimal(10, 2)
+  active      Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  recipe      ProductIngredient[]
+  orderItems  OrderItem[]
+  clientSales ClientSale[]
 }
 
 model Ingredient {
@@ -102,4 +103,24 @@ model Task {
   date        DateTime
   done        Boolean  @default(false)
   createdAt   DateTime @default(now())
+}
+
+model Client {
+  id        Int          @id @default(autoincrement())
+  name      String
+  notes     String?
+  createdAt DateTime     @default(now())
+  sales     ClientSale[]
+}
+
+model ClientSale {
+  id        Int      @id @default(autoincrement())
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId  Int
+  product   Product  @relation(fields: [productId], references: [id])
+  productId Int
+  quantity  Int      @default(1)
+  unitPrice Decimal  @db.Decimal(10, 2)
+  date      DateTime
+  createdAt DateTime @default(now())
 }
