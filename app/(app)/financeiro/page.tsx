@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Banknote, ChevronLeft, ChevronRight, CircleDollarSign, CreditCard, QrCode, TrendingDown, TrendingUp } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
-import { brParts, formatBRL, paymentLabel, pctChange, TIME_ZONE, zonedDate } from '@/lib/format'
+import { brParts, formatBRL, paymentLabel, pctChange, TIME_ZONE, toDateInputValue, zonedDate } from '@/lib/format'
 import { ExpenseForm } from '@/components/expense-form'
 import { ExpenseRow } from '@/components/expense-row'
 import { AllTimeRevenueBox } from '@/components/all-time-revenue-box'
@@ -87,7 +87,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
     return `/financeiro?${params.toString()}`
   }
 
-  const [orders, allExpenses, entriesCount, entries, allTimeOrders, allTimeEntries, firstOrder, firstExpense, prevOrders, prevExpenses] = await Promise.all([
+  const [orders, allExpenses, entriesCount, entries, allTimeOrders, allTimeEntries, firstOrder, firstExpense, prevOrders, prevExpenses, withdrawals, prevWithdrawals] = await Promise.all([
     prisma.order.findMany({
       where: { createdAt: { gte: start, lt: end }, status: 'CONCLUIDO', paid: true },
       select: { total: true, paymentMethod: true },
@@ -116,13 +116,22 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
       where: { date: { gte: prevStart, lt: start } },
       select: { type: true, amount: true },
     }),
+    prisma.withdrawal.findMany({
+      where: { date: { gte: start, lt: end } },
+      select: { amount: true },
+    }),
+    prisma.withdrawal.findMany({
+      where: { date: { gte: prevStart, lt: start } },
+      select: { amount: true },
+    }),
   ])
 
   const ordersRevenue = orders.reduce((sum, o) => sum + Number(o.total), 0)
   const manualIncome = allExpenses.filter((e) => e.type === 'RECEITA').reduce((sum, e) => sum + Number(e.amount), 0)
   const totalExpenses = allExpenses.filter((e) => e.type === 'DESPESA').reduce((sum, e) => sum + Number(e.amount), 0)
+  const withdrawalsTotal = withdrawals.reduce((sum, w) => sum + Number(w.amount), 0)
   const revenue = ordersRevenue + manualIncome
-  const profit = revenue - totalExpenses
+  const profit = revenue - totalExpenses - withdrawalsTotal
 
   const allTimeRevenue = Number(allTimeOrders._sum.total ?? 0)
     + Number(allTimeEntries.find((e) => e.type === 'RECEITA')?._sum.amount ?? 0)
@@ -130,8 +139,9 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
   const prevOrdersRevenue = prevOrders.reduce((sum, o) => sum + Number(o.total), 0)
   const prevManualIncome = prevExpenses.filter((e) => e.type === 'RECEITA').reduce((sum, e) => sum + Number(e.amount), 0)
   const prevTotalExpenses = prevExpenses.filter((e) => e.type === 'DESPESA').reduce((sum, e) => sum + Number(e.amount), 0)
+  const prevWithdrawalsTotal = prevWithdrawals.reduce((sum, w) => sum + Number(w.amount), 0)
   const prevRevenue = prevOrdersRevenue + prevManualIncome
-  const prevProfit = prevRevenue - prevTotalExpenses
+  const prevProfit = prevRevenue - prevTotalExpenses - prevWithdrawalsTotal
 
   const revenueTrendPct = pctChange(revenue, prevRevenue)
   const expensesTrendPct = pctChange(totalExpenses, prevTotalExpenses)
@@ -229,7 +239,10 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
             <TrendBadge pct={profitTrendPct} goodDirection="up" />
           </div>
           <p>Lucro do {periodNoun}</p><h3 style={{ color: profit >= 0 ? 'var(--green)' : '#b2465a' }}>{formatBRL(profit)}</h3>
-          <small>receita − despesas{profitTrendPct !== null ? ` · vs. ${comparisonNoun}` : ''}</small>
+          <small>
+            receita − despesas{withdrawalsTotal > 0 ? ` − ${formatBRL(withdrawalsTotal)} retirado` : ''}
+            {profitTrendPct !== null ? ` · vs. ${comparisonNoun}` : ''}
+          </small>
         </div>
       </div>
 
@@ -295,6 +308,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
                   description={e.description}
                   amount={Number(e.amount)}
                   date={new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: TIME_ZONE }).format(e.date)}
+                  dateISO={toDateInputValue(e.date)}
                 />
               ))}
               {entries.length === 0 && (

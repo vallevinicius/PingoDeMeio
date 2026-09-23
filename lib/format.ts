@@ -21,6 +21,12 @@ export function startOfDayBR(date: Date) {
   return zonedDate(year, month, day)
 }
 
+/** Formats a Date as a Brasília-calendar `YYYY-MM-DD` string, for `<input type="date">`. */
+export function toDateInputValue(date: Date) {
+  const { year, month, day } = brParts(date)
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+}
+
 export function formatBRL(value: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
 }
