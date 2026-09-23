@@ -4,22 +4,49 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  Bell, CalendarDays, ChevronDown, CircleDollarSign, ClipboardList,
+  Bell, CalendarCheck, CalendarDays, ChevronDown, CircleDollarSign, ClipboardList,
   HandCoins, LayoutDashboard, ListTree, LogOut, Menu, Package, Plus, Search, ShoppingBag,
   Sparkles, Wallet, X,
 } from 'lucide-react'
 
 const logo = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/pingo%20de%20meio%20%281%29-VXuSvY2mNyRFLACwO7DcYHOs05nRrt.png'
 
-const navItems = [
-  { label: 'Visão geral', icon: LayoutDashboard, href: '/' },
-  { label: 'Vendas do dia', icon: CircleDollarSign, href: '/vendas-do-dia' },
-  { label: 'Estoque', icon: Package, href: '/estoque' },
-  { label: 'Produtos', icon: ListTree, href: '/produtos' },
-  { label: 'Terminal PDV', icon: ShoppingBag, href: '/pdv' },
-  { label: 'Histórico de pedidos', icon: ClipboardList, href: '/pedidos' },
-  { label: 'Financeiro', icon: Wallet, href: '/financeiro' },
-  { label: 'Retiradas', icon: HandCoins, href: '/retiradas' },
+const navGroups = [
+  {
+    label: 'GERAL',
+    items: [
+      { label: 'Visão geral', icon: LayoutDashboard, href: '/' },
+    ],
+  },
+  {
+    label: 'VENDAS',
+    items: [
+      { label: 'Vendas do dia', icon: CircleDollarSign, href: '/vendas-do-dia' },
+      { label: 'Terminal PDV', icon: ShoppingBag, href: '/pdv' },
+      { label: 'Histórico de pedidos', icon: ClipboardList, href: '/pedidos' },
+    ],
+  },
+  {
+    label: 'PRODUTOS E ESTOQUE',
+    items: [
+      { label: 'Estoque', icon: Package, href: '/estoque' },
+      { label: 'Produtos', icon: ListTree, href: '/produtos' },
+    ],
+  },
+  {
+    label: 'FINANCEIRO',
+    items: [
+      { label: 'Financeiro', icon: Wallet, href: '/financeiro' },
+      { label: 'Retiradas', icon: HandCoins, href: '/retiradas' },
+    ],
+  },
+  {
+    label: 'ORGANIZAÇÃO',
+    items: [
+      { label: 'Agenda', icon: CalendarCheck, href: '/agenda' },
+      { label: 'Calendário', icon: CalendarDays, href: '/calendario' },
+    ],
+  },
 ]
 
 export function Shell({ children }: { children: React.ReactNode }) {
@@ -41,11 +68,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <div className="brand"><img src={logo} alt="Pingo de Meio" /><div><strong>Pingo de</strong><span>MEIO</span></div></div>
         <Link href="/pdv" onClick={() => setMenuOpen(false)} className="new-order"><Plus size={18} /> Novo pedido</Link>
         <nav aria-label="Navegação principal">
-          <p className="nav-label">MENU PRINCIPAL</p>
-          {navItems.map(({ label, icon: Icon, href }) => (
-            <Link key={label} href={href} onClick={() => setMenuOpen(false)} className={`nav-item ${pathname === href ? 'active' : ''}`}>
-              <Icon size={18} />{label}
-            </Link>
+          {navGroups.map((group, i) => (
+            <div className="nav-group" key={group.label}>
+              <p className={`nav-label ${i > 0 ? 'nav-label-bottom' : ''}`}>{group.label}</p>
+              {group.items.map(({ label, icon: Icon, href }) => (
+                <Link key={label} href={href} onClick={() => setMenuOpen(false)} className={`nav-item ${pathname === href ? 'active' : ''}`}>
+                  <Icon size={18} />{label}
+                </Link>
+              ))}
+            </div>
           ))}
         </nav>
         <div className="sidebar-tip"><Sparkles size={17} /><div><b>Fechamento do dia</b><span>Confira seus resultados antes de encerrar.</span></div></div>
