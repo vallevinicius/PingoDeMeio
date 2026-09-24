@@ -87,8 +87,14 @@ model Expense {
   createdAt   DateTime  @default(now())
 }
 
+enum WithdrawalKind {
+  RETIRADA
+  INVESTIMENTO
+}
+
 model Withdrawal {
-  id          Int      @id @default(autoincrement())
+  id          Int            @id @default(autoincrement())
+  kind        WithdrawalKind @default(RETIRADA)
   partnerName String
   amount      Decimal  @db.Decimal(10, 2)
   description String?

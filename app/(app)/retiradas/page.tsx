@@ -122,7 +122,7 @@ export default async function RetiradasPage({ searchParams }: { searchParams: Pr
         <div className="panel-head"><div><h2>Retiradas de {monthLabel}</h2><p>{monthWithdrawals.length} lançamentos</p></div></div>
         <div className="table-wrap" style={{ marginTop: 16 }}>
           <table>
-            <thead><tr><th>DATA</th><th>SÓCIO</th><th>DESCRIÇÃO</th><th>VALOR</th><th></th></tr></thead>
+            <thead><tr><th>DATA</th><th>SÓCIO</th><th>TIPO</th><th>DESCRIÇÃO</th><th>VALOR</th><th></th></tr></thead>
             <tbody>
               {monthWithdrawals.map((w) => (
                 <WithdrawalRow
@@ -131,11 +131,12 @@ export default async function RetiradasPage({ searchParams }: { searchParams: Pr
                   partnerName={w.partnerName}
                   description={w.description}
                   amount={Number(w.amount)}
+                  kind={w.kind}
                   date={new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: TIME_ZONE }).format(w.date)}
                 />
               ))}
               {monthWithdrawals.length === 0 && (
-                <tr><td colSpan={5} style={{ textAlign: 'center', padding: 24 }}>Nenhuma retirada neste mês.</td></tr>
+                <tr><td colSpan={6} style={{ textAlign: 'center', padding: 24 }}>Nenhuma retirada neste mês.</td></tr>
               )}
             </tbody>
           </table>

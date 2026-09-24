@@ -13,6 +13,7 @@ function todayISO() {
 export function WithdrawalForm({ partners }: { partners: string[] }) {
   const router = useRouter()
   const [partnerName, setPartnerName] = useState(partners[0] ?? '')
+  const [kind, setKind] = useState<'RETIRADA' | 'INVESTIMENTO'>('RETIRADA')
   const [amount, setAmount] = useState('')
   const [date, setDate] = useState(todayISO())
   const [description, setDescription] = useState('')
@@ -27,7 +28,7 @@ export function WithdrawalForm({ partners }: { partners: string[] }) {
       const res = await fetch('/api/withdrawals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ partnerName, amount: Number(amount), date, description: description.trim() || undefined }),
+        body: JSON.stringify({ partnerName, amount: Number(amount), date, kind, description: description.trim() || undefined }),
       })
       if (!res.ok) {
         const body = await res.json()
@@ -45,6 +46,14 @@ export function WithdrawalForm({ partners }: { partners: string[] }) {
 
   return (
     <form onSubmit={submit}>
+      <div className="field-group" style={{ marginBottom: 16 }}>
+        <label>Tipo</label>
+        <div className="chip-grid">
+          <button type="button" className={`chip ${kind === 'RETIRADA' ? 'selected' : ''}`} onClick={() => setKind('RETIRADA')}>Retirada</button>
+          <button type="button" className={`chip ${kind === 'INVESTIMENTO' ? 'selected' : ''}`} onClick={() => setKind('INVESTIMENTO')}>Investimento</button>
+        </div>
+      </div>
+
       <div className="field-group" style={{ marginBottom: 16 }}>
         <label>Sócio</label>
         <input

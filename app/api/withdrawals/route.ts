@@ -3,11 +3,12 @@ import { prisma } from '@/lib/prisma'
 import { zonedDate } from '@/lib/format'
 
 export async function POST(request: NextRequest) {
-  const { partnerName, amount, date, description } = await request.json() as {
+  const { partnerName, amount, date, description, kind } = await request.json() as {
     partnerName: string
     amount: number
     date: string
     description?: string
+    kind?: 'RETIRADA' | 'INVESTIMENTO'
   }
 
   if (!partnerName || amount === undefined || !date) {
@@ -21,6 +22,7 @@ export async function POST(request: NextRequest) {
     data: {
       partnerName: partnerName.trim(),
       amount: Number(amount),
+      kind: kind === 'INVESTIMENTO' ? 'INVESTIMENTO' : 'RETIRADA',
       description: description?.trim() || null,
       date: withdrawalDate,
     },

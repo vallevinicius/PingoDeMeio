@@ -4,12 +4,13 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatBRL } from '@/lib/format'
 
-export function WithdrawalRow({ id, date, partnerName, description, amount }: {
+export function WithdrawalRow({ id, date, partnerName, description, amount, kind }: {
   id: number
   date: string
   partnerName: string
   description: string | null
   amount: number
+  kind: 'RETIRADA' | 'INVESTIMENTO'
 }) {
   const router = useRouter()
   const [removing, setRemoving] = useState(false)
@@ -28,6 +29,7 @@ export function WithdrawalRow({ id, date, partnerName, description, amount }: {
     <tr>
       <td>{date}</td>
       <td><b>{partnerName}</b></td>
+      <td>{kind === 'INVESTIMENTO' ? 'Investimento' : 'Retirada'}</td>
       <td>{description ?? '—'}</td>
       <td><b style={{ color: '#b2465a' }}>- {formatBRL(amount)}</b></td>
       <td>

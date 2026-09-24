@@ -117,11 +117,11 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
       select: { type: true, amount: true },
     }),
     prisma.withdrawal.findMany({
-      where: { date: { gte: start, lt: end } },
+      where: { date: { gte: start, lt: end }, kind: 'RETIRADA' },
       select: { amount: true },
     }),
     prisma.withdrawal.findMany({
-      where: { date: { gte: prevStart, lt: start } },
+      where: { date: { gte: prevStart, lt: start }, kind: 'RETIRADA' },
       select: { amount: true },
     }),
   ])
