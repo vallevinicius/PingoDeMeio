@@ -28,7 +28,7 @@ export async function getDashboardData(referenceDate: Date = new Date()) {
     prisma.order.findMany({
       orderBy: { createdAt: 'desc' },
       take: 6,
-      include: { items: { include: { product: true } } },
+      include: { items: { include: { product: true } }, client: true },
     }),
   ])
 
@@ -81,6 +81,7 @@ export async function getDashboardData(referenceDate: Date = new Date()) {
       id: order.id,
       code: formatOrderCode(order.id),
       time: order.createdAt,
+      location: order.client?.name ?? '—',
       productName: item ? item.product.name : '—',
       quantity: item?.quantity ?? 1,
       extraFlavors: order.items.length - 1,

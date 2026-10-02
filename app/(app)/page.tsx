@@ -105,12 +105,13 @@ export default async function Page() {
           </div>
           <div className="table-wrap">
             <table>
-              <thead><tr><th>PEDIDO</th><th>HORÁRIO</th><th>PRODUTO</th><th>TOTAL</th><th>STATUS</th></tr></thead>
+              <thead><tr><th>PEDIDO</th><th>HORÁRIO</th><th>LOCAL</th><th>PRODUTO</th><th>TOTAL</th><th>STATUS</th></tr></thead>
               <tbody>
                 {data.recentOrders.map((o) => (
                   <tr key={o.id}>
                     <td><b>{o.code}</b></td>
                     <td>{formatTime(o.time)}</td>
+                    <td>{o.location}</td>
                     <td>
                       <b>{o.productName}</b>
                       <small>{o.quantity > 1 ? `${o.quantity} unidades` : '1 unidade'}{o.extraFlavors > 0 ? ` +${o.extraFlavors} sabor${o.extraFlavors > 1 ? 'es' : ''}` : ''}</small>
@@ -120,7 +121,7 @@ export default async function Page() {
                   </tr>
                 ))}
                 {data.recentOrders.length === 0 && (
-                  <tr><td colSpan={5} style={{ textAlign: 'center', padding: 24 }}>Nenhum pedido ainda. Crie um no Terminal PDV.</td></tr>
+                  <tr><td colSpan={6} style={{ textAlign: 'center', padding: 24 }}>Nenhum pedido ainda. Crie um no Terminal PDV.</td></tr>
                 )}
               </tbody>
             </table>
