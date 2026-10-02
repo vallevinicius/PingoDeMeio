@@ -3,15 +3,20 @@ import { prisma } from '@/lib/prisma'
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
-  const { items, paymentMethod, paid, customerName } = body as {
+  const { items, paymentMethod, paid, customerName, clientId } = body as {
     items: { productId: number; quantity?: number; unitPrice?: number }[]
     paymentMethod: 'PIX' | 'CARTAO' | 'DINHEIRO'
     paid?: boolean
     customerName?: string
+    clientId?: number
   }
 
   if (!items?.length || !paymentMethod) {
     return NextResponse.json({ error: 'items e paymentMethod são obrigatórios' }, { status: 400 })
+  }
+
+  if (!clientId) {
+    return NextResponse.json({ error: 'Local de venda é obrigatório' }, { status: 400 })
   }
 
   const normalizedItems = items
@@ -24,6 +29,11 @@ export async function POST(request: NextRequest) {
 
   if (normalizedItems.length === 0) {
     return NextResponse.json({ error: 'Nenhum item válido no pedido' }, { status: 400 })
+  }
+
+  const client = await prisma.client.findUnique({ where: { id: Number(clientId) } })
+  if (!client) {
+    return NextResponse.json({ error: 'Local de venda não encontrado' }, { status: 404 })
   }
 
   const products = await prisma.product.findMany({
@@ -50,6 +60,7 @@ export async function POST(request: NextRequest) {
         paymentMethod,
         paid: paid ?? true,
         customerName: customerName?.trim() || null,
+        clientId: clientId ? Number(clientId) : null,
         total,
         items: {
           create: normalizedItems.map((item) => ({

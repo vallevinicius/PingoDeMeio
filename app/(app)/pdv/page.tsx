@@ -4,7 +4,10 @@ import { PdvForm } from '@/components/pdv-form'
 export const dynamic = 'force-dynamic'
 
 export default async function PdvPage() {
-  const products = await prisma.product.findMany({ where: { active: true }, orderBy: { name: 'asc' } })
+  const [products, clients] = await Promise.all([
+    prisma.product.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
+    prisma.client.findMany({ orderBy: { name: 'asc' } }),
+  ])
 
   return (
     <>
@@ -12,7 +15,10 @@ export default async function PdvPage() {
         <h1 className="section-title">Terminal PDV</h1>
         <p className="section-sub">Registre um novo pedido no caixa.</p>
       </div>
-      <PdvForm products={products.map((p) => ({ id: p.id, name: p.name, price: Number(p.price), sizeLabel: p.sizeLabel }))} />
+      <PdvForm
+        products={products.map((p) => ({ id: p.id, name: p.name, price: Number(p.price), sizeLabel: p.sizeLabel }))}
+        clients={clients.map((c) => ({ id: c.id, name: c.name }))}
+      />
     </>
   )
 }

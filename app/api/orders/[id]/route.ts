@@ -4,9 +4,9 @@ import { prisma } from '@/lib/prisma'
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { status, paid, customerName, paymentMethod, productId, quantity, unitPrice } = await request.json()
+  const { status, paid, customerName, clientId, paymentMethod, productId, quantity, unitPrice } = await request.json()
 
-  const data: Prisma.OrderUpdateInput = {}
+  const data: Prisma.OrderUncheckedUpdateInput = {}
 
   if (status !== undefined) {
     if (!['PREPARANDO', 'CONCLUIDO', 'CANCELADO'].includes(status)) {
@@ -18,6 +18,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (paid !== undefined) data.paid = Boolean(paid)
 
   if (customerName !== undefined) data.customerName = customerName?.trim() || null
+
+  if (clientId !== undefined) {
+    if (!clientId) {
+      return NextResponse.json({ error: 'Local de venda é obrigatório' }, { status: 400 })
+    }
+    data.clientId = Number(clientId)
+  }
 
   if (paymentMethod !== undefined) {
     if (!['PIX', 'CARTAO', 'DINHEIRO'].includes(paymentMethod)) {

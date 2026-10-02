@@ -56,6 +56,8 @@ model Order {
   id            Int           @id @default(autoincrement())
   createdAt     DateTime      @default(now())
   customerName  String?
+  client        Client?       @relation(fields: [clientId], references: [id])
+  clientId      Int?
   paymentMethod PaymentMethod
   status        OrderStatus   @default(PREPARANDO)
   paid          Boolean       @default(true)
@@ -117,6 +119,7 @@ model Client {
   notes     String?
   createdAt DateTime     @default(now())
   sales     ClientSale[]
+  orders    Order[]
 }
 
 model ClientSale {

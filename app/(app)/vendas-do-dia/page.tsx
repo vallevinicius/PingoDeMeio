@@ -12,13 +12,14 @@ export default async function VendasDoDiaPage() {
   const start = startOfDayBR(new Date())
   const end = new Date(start.getTime() + 24 * 60 * 60 * 1000)
 
-  const [orders, products] = await Promise.all([
+  const [orders, products, clients] = await Promise.all([
     prisma.order.findMany({
       where: { createdAt: { gte: start, lt: end } },
       orderBy: { createdAt: 'desc' },
-      include: { items: { include: { product: true } } },
+      include: { items: { include: { product: true } }, client: true },
     }),
     prisma.product.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
+    prisma.client.findMany({ orderBy: { name: 'asc' } }),
   ])
 
   const validOrders = orders.filter((o) => o.status === 'CONCLUIDO' && o.paid)
@@ -51,7 +52,7 @@ export default async function VendasDoDiaPage() {
         <div className="panel-head"><div><h2>Pedidos de hoje</h2><p>Ordenados do mais recente para o mais antigo</p></div></div>
         <div className="table-wrap">
           <table>
-            <thead><tr><th>PEDIDO</th><th>HORÁRIO</th><th>CLIENTE</th><th>PRODUTO</th><th>TOTAL</th><th>PAGAMENTO</th><th>PAGO</th><th>STATUS</th><th></th><th></th></tr></thead>
+            <thead><tr><th>PEDIDO</th><th>HORÁRIO</th><th>CLIENTE</th><th>LOCAL</th><th>PRODUTO</th><th>TOTAL</th><th>PAGAMENTO</th><th>PAGO</th><th>STATUS</th><th></th><th></th></tr></thead>
             <tbody>
               {orders.map((order) => {
                 const item = order.items[0]
@@ -61,6 +62,7 @@ export default async function VendasDoDiaPage() {
                     <td><b>{formatOrderCode(order.id)}</b></td>
                     <td>{formatTime(order.createdAt)}</td>
                     <td>{order.customerName ?? '—'}</td>
+                    <td>{order.client?.name ?? '—'}</td>
                     <td>
                       <b>{item?.product.name ?? '—'}</b>
                       <small>{item ? `${item.quantity}x` : ''}{extraFlavors > 0 ? ` +${extraFlavors} sabor${extraFlavors > 1 ? 'es' : ''}` : ''}</small>
@@ -74,10 +76,12 @@ export default async function VendasDoDiaPage() {
                         order={{
                           id: order.id,
                           customerName: order.customerName,
+                          clientId: order.clientId,
                           paymentMethod: order.paymentMethod,
                           items: order.items.map((i) => ({ productId: i.productId, quantity: i.quantity, unitPrice: Number(i.unitPrice) })),
                         }}
                         products={products.map((p) => ({ id: p.id, name: p.name, price: Number(p.price), sizeLabel: p.sizeLabel }))}
+                        clients={clients.map((c) => ({ id: c.id, name: c.name }))}
                       />
                     </td>
                     <td><DeleteOrderButton id={order.id} /></td>
@@ -85,7 +89,7 @@ export default async function VendasDoDiaPage() {
                 )
               })}
               {orders.length === 0 && (
-                <tr><td colSpan={10} style={{ textAlign: 'center', padding: 24 }}>Nenhum pedido hoje ainda.</td></tr>
+                <tr><td colSpan={11} style={{ textAlign: 'center', padding: 24 }}>Nenhum pedido hoje ainda.</td></tr>
               )}
             </tbody>
           </table>

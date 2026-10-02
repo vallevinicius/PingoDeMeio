@@ -6,6 +6,7 @@ import { Pencil } from 'lucide-react'
 import { CurrencyInput } from '@/components/currency-input'
 
 type Product = { id: number; name: string; price: number; sizeLabel: string }
+type Client = { id: number; name: string }
 
 const paymentOptions = [
   { value: 'PIX', label: 'Pix' },
@@ -16,17 +17,19 @@ const paymentOptions = [
 type Order = {
   id: number
   customerName: string | null
+  clientId: number | null
   paymentMethod: string
   items: { productId: number; quantity: number; unitPrice: number }[]
 }
 
-export function EditOrderButton({ order, products }: { order: Order; products: Product[] }) {
+export function EditOrderButton({ order, products, clients }: { order: Order; products: Product[]; clients: Client[] }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const [customerName, setCustomerName] = useState(order.customerName ?? '')
+  const [clientId, setClientId] = useState(order.clientId ? String(order.clientId) : '')
   const [paymentMethod, setPaymentMethod] = useState(order.paymentMethod)
   const [productId, setProductId] = useState(order.items[0]?.productId ?? products[0]?.id)
   const [quantity, setQuantity] = useState(order.items[0]?.quantity ?? 1)
@@ -34,6 +37,7 @@ export function EditOrderButton({ order, products }: { order: Order; products: P
 
   function openModal() {
     setCustomerName(order.customerName ?? '')
+    setClientId(order.clientId ? String(order.clientId) : '')
     setPaymentMethod(order.paymentMethod)
     setProductId(order.items[0]?.productId ?? products[0]?.id)
     setQuantity(order.items[0]?.quantity ?? 1)
@@ -45,6 +49,10 @@ export function EditOrderButton({ order, products }: { order: Order; products: P
   const singleItem = order.items.length <= 1
 
   async function save() {
+    if (!clientId) {
+      setError('Local de venda é obrigatório')
+      return
+    }
     setSaving(true)
     setError(null)
     try {
@@ -53,8 +61,8 @@ export function EditOrderButton({ order, products }: { order: Order; products: P
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(
           singleItem
-            ? { customerName, paymentMethod, productId, quantity, unitPrice: Number(unitPrice) }
-            : { customerName, paymentMethod },
+            ? { customerName, clientId: Number(clientId), paymentMethod, productId, quantity, unitPrice: Number(unitPrice) }
+            : { customerName, clientId: Number(clientId), paymentMethod },
         ),
       })
       const body = await res.json()
@@ -89,6 +97,14 @@ export function EditOrderButton({ order, products }: { order: Order; products: P
             <div className="field-group">
               <label>Nome do cliente</label>
               <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Ex: Maria" />
+            </div>
+
+            <div className="field-group">
+              <label>Local de venda</label>
+              <select value={clientId} onChange={(e) => setClientId(e.target.value)} required>
+                <option value="" disabled>Selecione o local</option>
+                {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
             </div>
 
             {singleItem ? (

@@ -6,6 +6,7 @@ import { formatBRL, formatOrderCode } from '@/lib/format'
 import { CurrencyInput } from '@/components/currency-input'
 
 type Product = { id: number; name: string; price: number; sizeLabel: string }
+type Client = { id: number; name: string }
 type CartLine = { productId: number; quantity: number; unitPrice: string }
 
 const paymentOptions = [
@@ -14,10 +15,11 @@ const paymentOptions = [
   { value: 'DINHEIRO', label: 'Dinheiro' },
 ]
 
-export function PdvForm({ products }: { products: Product[] }) {
+export function PdvForm({ products, clients }: { products: Product[]; clients: Client[] }) {
   const router = useRouter()
   const [cart, setCart] = useState<CartLine[]>([])
   const [customerName, setCustomerName] = useState('')
+  const [clientId, setClientId] = useState('')
   const [payment, setPayment] = useState('PIX')
   const [paid, setPaid] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -55,7 +57,7 @@ export function PdvForm({ products }: { products: Product[] }) {
   const total = cartLines.reduce((sum, l) => sum + Number(l.unitPrice || 0) * l.quantity, 0)
 
   async function submit() {
-    if (cart.length === 0) return
+    if (cart.length === 0 || !clientId) return
     setSubmitting(true)
     setMessage(null)
     try {
@@ -67,6 +69,7 @@ export function PdvForm({ products }: { products: Product[] }) {
           paymentMethod: payment,
           paid,
           customerName: customerName.trim() || undefined,
+          clientId: Number(clientId),
         }),
       })
       const body = await res.json()
@@ -78,6 +81,7 @@ export function PdvForm({ products }: { products: Product[] }) {
       setCart([])
       setPaid(true)
       setCustomerName('')
+      setClientId('')
       router.refresh()
     } finally {
       setSubmitting(false)
@@ -122,6 +126,14 @@ export function PdvForm({ products }: { products: Product[] }) {
         <div className="field-group" style={{ marginTop: 16 }}>
           <label>Nome do cliente (opcional)</label>
           <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Ex: Maria" />
+        </div>
+
+        <div className="field-group">
+          <label>Local de venda</label>
+          <select value={clientId} onChange={(e) => setClientId(e.target.value)} required>
+            <option value="" disabled>Selecione o local</option>
+            {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
         </div>
 
         <div className="field-group">
@@ -189,7 +201,7 @@ export function PdvForm({ products }: { products: Product[] }) {
           </div>
         )}
 
-        <button className="submit-btn" style={{ marginTop: 20 }} disabled={cart.length === 0 || submitting} onClick={submit}>
+        <button className="submit-btn" style={{ marginTop: 20 }} disabled={cart.length === 0 || !clientId || submitting} onClick={submit}>
           {submitting ? 'Enviando...' : 'Confirmar pedido'}
         </button>
 
