@@ -4,12 +4,13 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { formatBRL } from '@/lib/format'
 
-export function ClientSaleRow({ id, date, productName, quantity, unitPrice }: {
+export function ClientSaleRow({ id, date, productName, quantity, unitPrice, origin = 'Manual' }: {
   id: number
   date: string
   productName: string
   quantity: number
   unitPrice: number
+  origin?: string
 }) {
   const router = useRouter()
   const [removing, setRemoving] = useState(false)
@@ -30,6 +31,7 @@ export function ClientSaleRow({ id, date, productName, quantity, unitPrice }: {
       <td><b>{productName}</b></td>
       <td>{quantity}x</td>
       <td><b>{formatBRL(unitPrice * quantity)}</b></td>
+      <td><small style={{ color: 'var(--muted)' }}>{origin}</small></td>
       <td>
         <button type="button" className="link-button" style={{ fontSize: 12, color: '#b2465a' }} disabled={removing} onClick={remove}>
           {removing ? 'Removendo...' : 'Remover'}

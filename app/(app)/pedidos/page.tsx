@@ -69,8 +69,8 @@ export default async function PedidosPage({ searchParams }: { searchParams: Prom
             <label>Status</label>
             <select name="status" defaultValue={status ?? ''}>
               <option value="">Todos</option>
-              <option value="PREPARANDO">Preparando</option>
-              <option value="CONCLUIDO">Concluído</option>
+              <option value="PREPARANDO">A entregar</option>
+              <option value="CONCLUIDO">Entregue</option>
               <option value="CANCELADO">Cancelado</option>
             </select>
           </div>

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { formatBRL } from '@/lib/format'
+import { consignmentPayout, getConsignmentFee } from '@/lib/consignment'
 import { ClientForm } from '@/components/client-form'
 import { DeleteClientButton } from '@/components/delete-client-button'
 import { EditClientButton } from '@/components/edit-client-button'
@@ -8,10 +9,16 @@ import { EditClientButton } from '@/components/edit-client-button'
 export const dynamic = 'force-dynamic'
 
 export default async function ClientesPage() {
-  const clients = await prisma.client.findMany({
-    orderBy: { name: 'asc' },
-    include: { sales: true },
-  })
+  const [clients, consignmentFee] = await Promise.all([
+    prisma.client.findMany({
+      orderBy: { name: 'asc' },
+      include: {
+        sales: true,
+        orders: { where: { status: { not: 'CANCELADO' }, paid: true }, include: { items: true } },
+      },
+    }),
+    getConsignmentFee(),
+  ])
 
   return (
     <>
@@ -31,13 +38,18 @@ export default async function ClientesPage() {
       {clients.length === 0 && <p className="subtext">Nenhum cliente cadastrado ainda.</p>}
 
       {clients.map((client) => {
-        const total = client.sales.reduce((sum, s) => sum + Number(s.unitPrice) * s.quantity, 0)
-        const qty = client.sales.reduce((sum, s) => sum + s.quantity, 0)
+        const manualTotal = client.sales.reduce((sum, s) => sum + Number(s.unitPrice) * s.quantity, 0)
+        const manualQty = client.sales.reduce((sum, s) => sum + s.quantity, 0)
+        const orderTotal = client.orders.reduce((sum, o) => sum + Number(o.total), 0)
+        const orderQty = client.orders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0), 0)
+        const total = manualTotal + orderTotal
+        const qty = manualQty + orderQty
+        const payout = consignmentPayout(qty, client.isCompany, consignmentFee)
         return (
           <section className="panel" style={{ marginBottom: 16 }} key={client.id}>
             <div className="panel-head">
               <div>
-                <h2>{client.name}</h2>
+                <h2>{client.name}{client.isCompany && <small style={{ marginLeft: 8, fontWeight: 400, color: 'var(--muted)' }}>(empresa)</small>}</h2>
                 <p>{client.notes || 'Sem observações'}</p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -45,8 +57,14 @@ export default async function ClientesPage() {
                   <b style={{ display: 'block', fontSize: 16 }}>{formatBRL(total)}</b>
                   <small style={{ color: 'var(--muted)' }}>{qty} unidade{qty === 1 ? '' : 's'} vendida{qty === 1 ? '' : 's'}</small>
                 </div>
+                {!client.isCompany && (
+                  <div style={{ textAlign: 'right' }}>
+                    <b style={{ display: 'block', fontSize: 16, color: 'var(--purple)' }}>{formatBRL(payout)}</b>
+                    <small style={{ color: 'var(--muted)' }}>a repassar</small>
+                  </div>
+                )}
                 <Link href={`/clientes/${client.id}`} className="link-button" style={{ textDecoration: 'none' }}>Ver vendas <span>→</span></Link>
-                <EditClientButton id={client.id} name={client.name} notes={client.notes} />
+                <EditClientButton id={client.id} name={client.name} notes={client.notes} isCompany={client.isCompany} />
                 <DeleteClientButton id={client.id} />
               </div>
             </div>

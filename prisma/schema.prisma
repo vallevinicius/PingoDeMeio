@@ -19,6 +19,12 @@ enum OrderStatus {
   CANCELADO
 }
 
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
 model Product {
   id          Int                 @id @default(autoincrement())
   name        String
@@ -117,6 +123,7 @@ model Client {
   id        Int          @id @default(autoincrement())
   name      String
   notes     String?
+  isCompany Boolean      @default(false)
   createdAt DateTime     @default(now())
   sales     ClientSale[]
   orders    Order[]

@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
       data: {
         paymentMethod,
         paid: paid ?? true,
+        status: 'CONCLUIDO',
         customerName: customerName?.trim() || null,
         clientId: clientId ? Number(clientId) : null,
         total,

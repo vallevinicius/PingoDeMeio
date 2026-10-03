@@ -44,7 +44,7 @@ export function paymentLabel(method: string) {
 }
 
 export function statusLabel(status: string) {
-  return { PREPARANDO: 'Preparando', CONCLUIDO: 'Concluído', CANCELADO: 'Cancelado' }[status] ?? status
+  return { PREPARANDO: 'A entregar', CONCLUIDO: 'Entregue', CANCELADO: 'Cancelado' }[status] ?? status
 }
 
 export function stockStatus(quantity: number, minQuantity: number) {

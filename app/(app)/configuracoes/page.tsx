@@ -1,12 +1,15 @@
 import { prisma } from '@/lib/prisma'
+import { getConsignmentFee } from '@/lib/consignment'
+import { ConsignmentFeeForm } from '@/components/consignment-fee-form'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ConfiguracoesPage() {
-  const [productCount, ingredientCount, orderCount] = await Promise.all([
+  const [productCount, ingredientCount, orderCount, consignmentFee] = await Promise.all([
     prisma.product.count(),
     prisma.ingredient.count(),
     prisma.order.count(),
+    getConsignmentFee(),
   ])
 
   return (
@@ -21,6 +24,13 @@ export default async function ConfiguracoesPage() {
         <div className="stock-row"><div className="stock-info"><span>Produtos cadastrados</span><b>{productCount}</b></div></div>
         <div className="stock-row"><div className="stock-info"><span>Ingredientes em estoque</span><b>{ingredientCount}</b></div></div>
         <div className="stock-row"><div className="stock-info"><span>Pedidos registrados</span><b>{orderCount}</b></div></div>
+      </section>
+
+      <section className="panel" style={{ marginTop: 20 }}>
+        <div className="panel-head"><div><h2>Consignação</h2><p>Quanto repassamos a cada cliente por açaí vendido nos pontos de venda (não vale para clientes marcados como "venda da empresa")</p></div></div>
+        <div style={{ marginTop: 16 }}>
+          <ConsignmentFeeForm initialValue={consignmentFee} />
+        </div>
       </section>
 
       <section className="panel" style={{ marginTop: 20 }}>

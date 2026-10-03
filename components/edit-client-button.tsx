@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Pencil } from 'lucide-react'
 
-export function EditClientButton({ id, name, notes }: { id: number; name: string; notes: string | null }) {
+export function EditClientButton({ id, name, notes, isCompany }: { id: number; name: string; notes: string | null; isCompany: boolean }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -12,10 +12,12 @@ export function EditClientButton({ id, name, notes }: { id: number; name: string
 
   const [editName, setEditName] = useState(name)
   const [editNotes, setEditNotes] = useState(notes ?? '')
+  const [editIsCompany, setEditIsCompany] = useState(isCompany)
 
   function openModal() {
     setEditName(name)
     setEditNotes(notes ?? '')
+    setEditIsCompany(isCompany)
     setError(null)
     setOpen(true)
   }
@@ -27,7 +29,7 @@ export function EditClientButton({ id, name, notes }: { id: number; name: string
       const res = await fetch(`/api/clients/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: editName, notes: editNotes }),
+        body: JSON.stringify({ name: editName, notes: editNotes, isCompany: editIsCompany }),
       })
       const body = await res.json()
       if (!res.ok) {
@@ -67,6 +69,11 @@ export function EditClientButton({ id, name, notes }: { id: number; name: string
               <label>Observação</label>
               <input value={editNotes} onChange={(e) => setEditNotes(e.target.value)} placeholder="Ex: Trailer na praça central" />
             </div>
+
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontSize: 13, color: 'var(--muted)', cursor: 'pointer' }}>
+              <input type="checkbox" checked={editIsCompany} onChange={(e) => setEditIsCompany(e.target.checked)} style={{ width: 'auto' }} />
+              Venda da empresa (não gera repasse — o dinheiro é todo nosso)
+            </label>
 
             {error && <p style={{ color: '#b2465a', fontSize: 12 }}>{error}</p>}
 

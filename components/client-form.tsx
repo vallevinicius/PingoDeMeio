@@ -7,6 +7,7 @@ export function ClientForm() {
   const router = useRouter()
   const [name, setName] = useState('')
   const [notes, setNotes] = useState('')
+  const [isCompany, setIsCompany] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -18,7 +19,7 @@ export function ClientForm() {
       const res = await fetch('/api/clients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, notes: notes.trim() || undefined }),
+        body: JSON.stringify({ name, notes: notes.trim() || undefined, isCompany }),
       })
       if (!res.ok) {
         const body = await res.json()
@@ -27,6 +28,7 @@ export function ClientForm() {
       }
       setName('')
       setNotes('')
+      setIsCompany(false)
       router.refresh()
     } finally {
       setSaving(false)
@@ -48,6 +50,10 @@ export function ClientForm() {
           {saving ? 'Adicionando...' : 'Adicionar cliente'}
         </button>
       </div>
+      <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, fontSize: 13, color: 'var(--muted)', cursor: 'pointer' }}>
+        <input type="checkbox" checked={isCompany} onChange={(e) => setIsCompany(e.target.checked)} style={{ width: 'auto' }} />
+        Venda da empresa (não gera repasse — o dinheiro é todo nosso)
+      </label>
       {error && <span style={{ color: '#b2465a', fontSize: 12 }}>{error}</span>}
     </form>
   )

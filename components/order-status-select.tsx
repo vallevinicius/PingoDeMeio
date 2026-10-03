@@ -4,8 +4,8 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 const options = [
-  { value: 'PREPARANDO', label: 'Preparando' },
-  { value: 'CONCLUIDO', label: 'Concluído' },
+  { value: 'PREPARANDO', label: 'A entregar' },
+  { value: 'CONCLUIDO', label: 'Entregue' },
   { value: 'CANCELADO', label: 'Cancelado' },
 ]
 
