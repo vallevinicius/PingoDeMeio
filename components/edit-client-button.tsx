@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Building2, Pencil, Store } from 'lucide-react'
+import { Pencil } from 'lucide-react'
+import { ClientTypeToggle } from '@/components/client-type-toggle'
 
 export function EditClientButton({ id, name, notes, isCompany }: { id: number; name: string; notes: string | null; isCompany: boolean }) {
   const router = useRouter()
@@ -70,20 +71,7 @@ export function EditClientButton({ id, name, notes, isCompany }: { id: number; n
               <input value={editNotes} onChange={(e) => setEditNotes(e.target.value)} placeholder="Ex: Trailer na praça central" />
             </div>
 
-            <div className="field-group">
-              <label>Tipo de cliente</label>
-              <div className="chip-grid">
-                <button type="button" className={`chip ${!editIsCompany ? 'selected' : ''}`} onClick={() => setEditIsCompany(false)}>
-                  <Store size={13} style={{ marginRight: 6, verticalAlign: -2 }} /> Ponto de venda (consignado)
-                </button>
-                <button type="button" className={`chip ${editIsCompany ? 'selected' : ''}`} onClick={() => setEditIsCompany(true)}>
-                  <Building2 size={13} style={{ marginRight: 6, verticalAlign: -2 }} /> Venda da empresa
-                </button>
-              </div>
-              <small style={{ color: 'var(--muted)', marginTop: 6, display: 'block' }}>
-                {editIsCompany ? 'Não gera repasse: o dinheiro é todo nosso.' : 'Gera repasse pela comissão de consignação.'}
-              </small>
-            </div>
+            <ClientTypeToggle isCompany={editIsCompany} onChange={setEditIsCompany} />
 
             {error && <p style={{ color: '#b2465a', fontSize: 12 }}>{error}</p>}
 
