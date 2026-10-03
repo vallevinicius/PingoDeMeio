@@ -30,7 +30,7 @@ export default async function Page() {
         <Metric tint="tint-green" icon={<CircleDollarSign />} label="Receita de hoje" value={formatBRL(data.revenue)} trend={data.revenueTrendPct} note="vs. ontem" />
         <Metric tint="tint-gold" icon={<ShoppingBag />} label="Açaís vendidos" value={String(data.itemsSold)} trend={data.itemsSoldTrendPct} note="vs. ontem" />
         <Metric tint="tint-berry" icon={<Zap />} label="Ticket médio" value={formatBRL(data.avgTicket)} trend={data.avgTicketTrendPct} note="vs. ontem" />
-        <Metric tint="tint-lilac" icon={<Sparkles />} label="Mais pedido" value={data.topProduct?.name ?? '—'} note={data.topProduct ? `${data.topProduct.count} pedidos hoje` : 'Sem pedidos hoje'} />
+        <Metric tint="tint-lilac" icon={<Sparkles />} label="Mais pedido" value={data.topProduct?.name ?? 'X'} note={data.topProduct ? `${data.topProduct.count} pedidos hoje` : 'Sem pedidos hoje'} />
       </div>
 
       <div className="main-grid">

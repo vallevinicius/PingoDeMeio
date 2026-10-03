@@ -61,10 +61,10 @@ export default async function VendasDoDiaPage() {
                   <tr key={order.id}>
                     <td><b>{formatOrderCode(order.id)}</b></td>
                     <td>{formatTime(order.createdAt)}</td>
-                    <td>{order.customerName ?? '—'}</td>
-                    <td>{order.client?.name ?? '—'}</td>
+                    <td>{order.customerName ?? 'X'}</td>
+                    <td>{order.client?.name ?? 'X'}</td>
                     <td>
-                      <b>{item?.product.name ?? '—'}</b>
+                      <b>{item?.product.name ?? 'X'}</b>
                       <small>{item ? `${item.quantity}x` : ''}{extraFlavors > 0 ? ` +${extraFlavors} sabor${extraFlavors > 1 ? 'es' : ''}` : ''}</small>
                     </td>
                     <td><b>{formatBRL(Number(order.total))}</b></td>

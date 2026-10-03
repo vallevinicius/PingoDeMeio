@@ -49,7 +49,10 @@ export default async function ClientesPage() {
           <section className="panel" style={{ marginBottom: 16 }} key={client.id}>
             <div className="panel-head">
               <div>
-                <h2>{client.name}{client.isCompany && <small style={{ marginLeft: 8, fontWeight: 400, color: 'var(--muted)' }}>(empresa)</small>}</h2>
+                <h2 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {client.name}
+                  {client.isCompany && <span className="status company">Empresa</span>}
+                </h2>
                 <p>{client.notes || 'Sem observações'}</p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>

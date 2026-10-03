@@ -118,7 +118,7 @@ export function ProductRow({ id, name, price, sizeLabel, active, recipe, ingredi
 
       <div style={{ marginTop: 12, fontSize: 12, color: 'var(--muted)' }}>
         {recipe.length === 0 ? 'Sem receita cadastrada.' : recipe.map((r) => `${r.ingredientName} (${r.quantity}${r.unit})`).join(', ')}
-        {' — '}
+        {' · '}
         <button type="button" className="link-button" style={{ fontSize: 12 }} onClick={() => setEditingRecipe((v) => !v)}>
           {editingRecipe ? 'Fechar' : 'Editar receita'}
         </button>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Pencil } from 'lucide-react'
+import { Building2, Pencil, Store } from 'lucide-react'
 
 export function EditClientButton({ id, name, notes, isCompany }: { id: number; name: string; notes: string | null; isCompany: boolean }) {
   const router = useRouter()
@@ -70,10 +70,20 @@ export function EditClientButton({ id, name, notes, isCompany }: { id: number; n
               <input value={editNotes} onChange={(e) => setEditNotes(e.target.value)} placeholder="Ex: Trailer na praça central" />
             </div>
 
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, fontSize: 13, color: 'var(--muted)', cursor: 'pointer' }}>
-              <input type="checkbox" checked={editIsCompany} onChange={(e) => setEditIsCompany(e.target.checked)} style={{ width: 'auto' }} />
-              Venda da empresa (não gera repasse — o dinheiro é todo nosso)
-            </label>
+            <div className="field-group">
+              <label>Tipo de cliente</label>
+              <div className="chip-grid">
+                <button type="button" className={`chip ${!editIsCompany ? 'selected' : ''}`} onClick={() => setEditIsCompany(false)}>
+                  <Store size={13} style={{ marginRight: 6, verticalAlign: -2 }} /> Ponto de venda (consignado)
+                </button>
+                <button type="button" className={`chip ${editIsCompany ? 'selected' : ''}`} onClick={() => setEditIsCompany(true)}>
+                  <Building2 size={13} style={{ marginRight: 6, verticalAlign: -2 }} /> Venda da empresa
+                </button>
+              </div>
+              <small style={{ color: 'var(--muted)', marginTop: 6, display: 'block' }}>
+                {editIsCompany ? 'Não gera repasse: o dinheiro é todo nosso.' : 'Gera repasse pela comissão de consignação.'}
+              </small>
+            </div>
 
             {error && <p style={{ color: '#b2465a', fontSize: 12 }}>{error}</p>}
 

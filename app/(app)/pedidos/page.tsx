@@ -88,10 +88,10 @@ export default async function PedidosPage({ searchParams }: { searchParams: Prom
                   <tr key={order.id}>
                     <td><b>{formatOrderCode(order.id)}</b></td>
                     <td>{new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', timeZone: TIME_ZONE }).format(order.createdAt)} {formatTime(order.createdAt)}</td>
-                    <td>{order.customerName ?? '—'}</td>
-                    <td>{order.client?.name ?? '—'}</td>
+                    <td>{order.customerName ?? 'X'}</td>
+                    <td>{order.client?.name ?? 'X'}</td>
                     <td>
-                      <b>{item?.product.name ?? '—'}</b>
+                      <b>{item?.product.name ?? 'X'}</b>
                       <small>{item ? `${item.quantity}x` : ''}{extraFlavors > 0 ? ` +${extraFlavors} sabor${extraFlavors > 1 ? 'es' : ''}` : ''}</small>
                     </td>
                     <td><b>{formatBRL(Number(order.total))}</b></td>

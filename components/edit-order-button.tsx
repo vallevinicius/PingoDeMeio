@@ -136,7 +136,7 @@ export function EditOrderButton({ order, products, clients }: { order: Order; pr
               </>
             ) : (
               <p className="subtext" style={{ marginBottom: 16 }}>
-                Este pedido tem {order.items.length} sabores diferentes — para alterar os itens, exclua e crie um novo pelo Terminal PDV.
+                Este pedido tem {order.items.length} sabores diferentes. Para alterar os itens, exclua e crie um novo pelo Terminal PDV.
               </p>
             )}
 

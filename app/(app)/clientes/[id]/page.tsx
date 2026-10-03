@@ -69,6 +69,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <h1 className="section-title" style={{ margin: 0 }}>{client.name}</h1>
+          {client.isCompany && <span className="status company">Empresa</span>}
           <EditClientButton id={client.id} name={client.name} notes={client.notes} isCompany={client.isCompany} />
         </div>
         <p className="section-sub">{client.notes || 'Vendas registradas para este cliente.'}</p>

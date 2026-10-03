@@ -20,7 +20,7 @@ export default async function ConfiguracoesPage() {
       </div>
 
       <section className="panel">
-        <div className="panel-head"><div><h2>Loja</h2><p>Pingo de Meio — Loja principal</p></div></div>
+        <div className="panel-head"><div><h2>Loja</h2><p>Pingo de Meio (Loja principal)</p></div></div>
         <div className="stock-row"><div className="stock-info"><span>Produtos cadastrados</span><b>{productCount}</b></div></div>
         <div className="stock-row"><div className="stock-info"><span>Ingredientes em estoque</span><b>{ingredientCount}</b></div></div>
         <div className="stock-row"><div className="stock-info"><span>Pedidos registrados</span><b>{orderCount}</b></div></div>
@@ -35,7 +35,7 @@ export default async function ConfiguracoesPage() {
 
       <section className="panel" style={{ marginTop: 20 }}>
         <div className="panel-head"><div><h2>Banco de dados</h2><p>Conexão ativa via Prisma</p></div></div>
-        <p className="subtext">MySQL — banco <b>opingodemeio</b>. Gerencie produtos em <a href="/pdv">Terminal PDV</a> e ingredientes em <a href="/estoque">Estoque</a>.</p>
+        <p className="subtext">MySQL, banco <b>opingodemeio</b>. Gerencie produtos em <a href="/pdv">Terminal PDV</a> e ingredientes em <a href="/estoque">Estoque</a>.</p>
       </section>
     </>
   )

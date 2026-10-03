@@ -30,7 +30,7 @@ export function WithdrawalRow({ id, date, partnerName, description, amount, kind
       <td>{date}</td>
       <td><b>{partnerName}</b></td>
       <td>{kind === 'INVESTIMENTO' ? 'Investimento' : 'Retirada'}</td>
-      <td>{description ?? '—'}</td>
+      <td>{description ?? 'X'}</td>
       <td><b style={{ color: '#b2465a' }}>- {formatBRL(amount)}</b></td>
       <td>
         <button type="button" className="link-button" style={{ fontSize: 12, color: '#b2465a' }} disabled={removing} onClick={remove}>

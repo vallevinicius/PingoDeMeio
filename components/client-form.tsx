@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Building2, Store } from 'lucide-react'
 
 export function ClientForm() {
   const router = useRouter()
@@ -50,10 +51,20 @@ export function ClientForm() {
           {saving ? 'Adicionando...' : 'Adicionar cliente'}
         </button>
       </div>
-      <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, fontSize: 13, color: 'var(--muted)', cursor: 'pointer' }}>
-        <input type="checkbox" checked={isCompany} onChange={(e) => setIsCompany(e.target.checked)} style={{ width: 'auto' }} />
-        Venda da empresa (não gera repasse — o dinheiro é todo nosso)
-      </label>
+      <div className="field-group" style={{ marginTop: 4 }}>
+        <label>Tipo de cliente</label>
+        <div className="chip-grid">
+          <button type="button" className={`chip ${!isCompany ? 'selected' : ''}`} onClick={() => setIsCompany(false)}>
+            <Store size={13} style={{ marginRight: 6, verticalAlign: -2 }} /> Ponto de venda (consignado)
+          </button>
+          <button type="button" className={`chip ${isCompany ? 'selected' : ''}`} onClick={() => setIsCompany(true)}>
+            <Building2 size={13} style={{ marginRight: 6, verticalAlign: -2 }} /> Venda da empresa
+          </button>
+        </div>
+        <small style={{ color: 'var(--muted)', marginTop: 6, display: 'block' }}>
+          {isCompany ? 'Não gera repasse: o dinheiro é todo nosso.' : 'Gera repasse pela comissão de consignação.'}
+        </small>
+      </div>
       {error && <span style={{ color: '#b2465a', fontSize: 12 }}>{error}</span>}
     </form>
   )
