@@ -6,6 +6,8 @@ import { formatBRL, formatOrderCode, TIME_ZONE } from '@/lib/format'
 import { consignmentPayout, getConsignmentFee } from '@/lib/consignment'
 import { ClientSaleForm } from '@/components/client-sale-form'
 import { ClientSaleRow } from '@/components/client-sale-row'
+import { ClientPayoutForm } from '@/components/client-payout-form'
+import { ClientPayoutRow } from '@/components/client-payout-row'
 import { EditClientButton } from '@/components/edit-client-button'
 
 export const dynamic = 'force-dynamic'
@@ -24,6 +26,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           include: { items: { include: { product: true } } },
           orderBy: { createdAt: 'desc' },
         },
+        payouts: { orderBy: { date: 'desc' } },
       },
     }),
     prisma.product.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
@@ -59,7 +62,9 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   const totalRevenue = entries.reduce((sum, e) => sum + e.unitPrice * e.quantity, 0)
   const totalQuantity = entries.reduce((sum, e) => sum + e.quantity, 0)
   const avgTicket = entries.length ? totalRevenue / entries.length : 0
-  const payout = consignmentPayout(totalQuantity, client.isCompany, consignmentFee)
+  const payoutGenerated = consignmentPayout(totalQuantity, client.isCompany, consignmentFee)
+  const payoutPaid = client.payouts.reduce((sum, p) => sum + Number(p.amount), 0)
+  const payoutDue = payoutGenerated - payoutPaid
 
   return (
     <>
@@ -91,7 +96,8 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         {!client.isCompany && (
           <div className="metric fin-card accent-purple">
             <div className="metric-top"><div className="metric-icon tint-lilac"><HandCoins /></div></div>
-            <p>A repassar</p><h3>{formatBRL(payout)}</h3><small>{formatBRL(consignmentFee)} por unidade vendida</small>
+            <p>Ainda a repassar</p><h3 style={{ color: payoutDue > 0 ? undefined : 'var(--green)' }}>{formatBRL(payoutDue)}</h3>
+            <small>{formatBRL(payoutGenerated)} gerado · {formatBRL(payoutPaid)} já repassado</small>
           </div>
         )}
       </div>
@@ -105,6 +111,33 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           />
         </div>
       </section>
+
+      {!client.isCompany && (
+        <section className="panel" style={{ marginBottom: 20 }}>
+          <div className="panel-head"><div><h2>Registrar repasse</h2><p>Anote quanto já foi pago a este ponto de venda</p></div></div>
+          <div style={{ marginTop: 16 }}>
+            <ClientPayoutForm clientId={client.id} />
+          </div>
+          {client.payouts.length > 0 && (
+            <div className="table-wrap" style={{ marginTop: 16 }}>
+              <table>
+                <thead><tr><th>DATA</th><th>VALOR</th><th>OBSERVAÇÃO</th><th></th></tr></thead>
+                <tbody>
+                  {client.payouts.map((p) => (
+                    <ClientPayoutRow
+                      key={p.id}
+                      id={p.id}
+                      amount={Number(p.amount)}
+                      note={p.note}
+                      date={new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: TIME_ZONE }).format(p.date)}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
 
       <section className="panel">
         <div className="panel-head"><div><h2>Vendas registradas</h2><p>{entries.length} lançamentos (manuais + Terminal PDV)</p></div></div>
