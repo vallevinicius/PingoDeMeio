@@ -9,6 +9,15 @@ import {
   Sparkles, Users, Wallet, X,
 } from 'lucide-react'
 
+const bottomNavLeft = [
+  { label: 'Início', icon: LayoutDashboard, href: '/' },
+  { label: 'Vendas', icon: CircleDollarSign, href: '/vendas-do-dia' },
+]
+const bottomNavRight = [
+  { label: 'Pedidos', icon: ClipboardList, href: '/pedidos' },
+  { label: 'Clientes', icon: Users, href: '/clientes' },
+]
+
 const logo = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/pingo%20de%20meio%20%281%29-VXuSvY2mNyRFLACwO7DcYHOs05nRrt.png'
 
 const navGroups = [
@@ -103,6 +112,20 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </header>
         <div className="page-content">{children}</div>
       </section>
+
+      <nav className="bottom-nav" aria-label="Navegação rápida">
+        {bottomNavLeft.map(({ label, icon: Icon, href }) => (
+          <Link key={label} href={href} className={`bottom-nav-item ${pathname === href ? 'active' : ''}`}>
+            <Icon size={20} />{label}
+          </Link>
+        ))}
+        <Link href="/pdv" className="bottom-nav-fab"><i><Plus size={20} color="var(--purple-dark)" /></i>Vender</Link>
+        {bottomNavRight.map(({ label, icon: Icon, href }) => (
+          <Link key={label} href={href} className={`bottom-nav-item ${pathname === href ? 'active' : ''}`}>
+            <Icon size={20} />{label}
+          </Link>
+        ))}
+      </nav>
     </main>
   )
 }
