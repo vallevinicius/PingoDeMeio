@@ -19,6 +19,16 @@ enum OrderStatus {
   CANCELADO
 }
 
+enum ClientPaymentType {
+  SOBRE_VENDA
+  ADIANTADO
+}
+
+enum ClientBalanceDirection {
+  REPASSAR
+  RECEBER
+}
+
 model Setting {
   key       String   @id
   value     String
@@ -120,14 +130,19 @@ model Task {
 }
 
 model Client {
-  id        Int            @id @default(autoincrement())
-  name      String
-  notes     String?
-  isCompany Boolean        @default(false)
-  createdAt DateTime       @default(now())
-  sales     ClientSale[]
-  orders    Order[]
-  payouts   ClientPayout[]
+  id            Int                     @id @default(autoincrement())
+  name          String
+  notes         String?
+  isCompany     Boolean                 @default(false)
+  paymentType   ClientPaymentType       @default(SOBRE_VENDA)
+  direction     ClientBalanceDirection  @default(REPASSAR)
+  siteSalePrice Decimal                 @default(0) @db.Decimal(10, 2)
+  companyAmount Decimal                 @default(0) @db.Decimal(10, 2)
+  partnerAmount Decimal                 @default(5) @db.Decimal(10, 2)
+  createdAt     DateTime                @default(now())
+  sales         ClientSale[]
+  orders        Order[]
+  payouts       ClientPayout[]
 }
 
 model ClientSale {

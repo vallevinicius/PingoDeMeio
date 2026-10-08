@@ -10,8 +10,10 @@ function todayISO() {
   return new Date(d.getTime() - tzOffset).toISOString().slice(0, 10)
 }
 
-export function ClientPayoutForm({ clientId }: { clientId: number }) {
+export function ClientPayoutForm({ clientId, direction = 'REPASSAR' }: { clientId: number; direction?: 'REPASSAR' | 'RECEBER' }) {
   const router = useRouter()
+  const verb = direction === 'RECEBER' ? 'recebido' : 'repassado'
+  const action = direction === 'RECEBER' ? 'recebimento' : 'repasse'
   const [amount, setAmount] = useState('')
   const [note, setNote] = useState('')
   const [date, setDate] = useState(todayISO())
@@ -30,7 +32,7 @@ export function ClientPayoutForm({ clientId }: { clientId: number }) {
       })
       if (!res.ok) {
         const body = await res.json()
-        setError(body.error ?? 'Erro ao registrar repasse')
+        setError(body.error ?? `Erro ao registrar ${action}`)
         return
       }
       setAmount('')
@@ -46,7 +48,7 @@ export function ClientPayoutForm({ clientId }: { clientId: number }) {
     <form onSubmit={submit}>
       <div className="inline-form" style={{ marginTop: 0 }}>
         <div className="field-group" style={{ margin: 0 }}>
-          <label>Valor repassado</label>
+          <label>Valor {verb}</label>
           <CurrencyInput value={amount} onChange={setAmount} required style={{ width: 120 }} />
         </div>
         <div className="field-group" style={{ margin: 0 }}>
@@ -58,7 +60,7 @@ export function ClientPayoutForm({ clientId }: { clientId: number }) {
           <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ex: Pix do dia 05" style={{ width: 220 }} />
         </div>
         <button className="submit-btn" style={{ width: 'auto', padding: '10px 18px' }} disabled={saving || !amount}>
-          {saving ? 'Registrando...' : 'Registrar repasse'}
+          {saving ? 'Registrando...' : `Registrar ${action}`}
         </button>
       </div>
       {error && <span style={{ color: '#b2465a', fontSize: 12 }}>{error}</span>}

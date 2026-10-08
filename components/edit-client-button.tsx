@@ -3,22 +3,45 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Pencil } from 'lucide-react'
-import { ClientTypeToggle } from '@/components/client-type-toggle'
+import { ClientTypeToggle, type ClientEconomics } from '@/components/client-type-toggle'
 
-export function EditClientButton({ id, name, notes, isCompany }: { id: number; name: string; notes: string | null; isCompany: boolean }) {
+type Client = {
+  id: number
+  name: string
+  notes: string | null
+  isCompany: boolean
+  paymentType: ClientEconomics['paymentType']
+  direction: ClientEconomics['direction']
+  siteSalePrice: number
+  companyAmount: number
+  partnerAmount: number
+}
+
+function toEconomics(client: Client): ClientEconomics {
+  return {
+    isCompany: client.isCompany,
+    paymentType: client.paymentType,
+    direction: client.direction,
+    siteSalePrice: client.siteSalePrice.toFixed(2),
+    companyAmount: client.companyAmount.toFixed(2),
+    partnerAmount: client.partnerAmount.toFixed(2),
+  }
+}
+
+export function EditClientButton({ client }: { client: Client }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [editName, setEditName] = useState(name)
-  const [editNotes, setEditNotes] = useState(notes ?? '')
-  const [editIsCompany, setEditIsCompany] = useState(isCompany)
+  const [editName, setEditName] = useState(client.name)
+  const [editNotes, setEditNotes] = useState(client.notes ?? '')
+  const [economics, setEconomics] = useState<ClientEconomics>(() => toEconomics(client))
 
   function openModal() {
-    setEditName(name)
-    setEditNotes(notes ?? '')
-    setEditIsCompany(isCompany)
+    setEditName(client.name)
+    setEditNotes(client.notes ?? '')
+    setEconomics(toEconomics(client))
     setError(null)
     setOpen(true)
   }
@@ -27,10 +50,19 @@ export function EditClientButton({ id, name, notes, isCompany }: { id: number; n
     setSaving(true)
     setError(null)
     try {
-      const res = await fetch(`/api/clients/${id}`, {
+      const res = await fetch(`/api/clients/${client.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: editName, notes: editNotes, isCompany: editIsCompany }),
+        body: JSON.stringify({
+          name: editName,
+          notes: editNotes,
+          isCompany: economics.isCompany,
+          paymentType: economics.paymentType,
+          direction: economics.direction,
+          siteSalePrice: Number(economics.siteSalePrice || 0),
+          companyAmount: Number(economics.companyAmount || 0),
+          partnerAmount: Number(economics.partnerAmount || 0),
+        }),
       })
       const body = await res.json()
       if (!res.ok) {
@@ -71,7 +103,7 @@ export function EditClientButton({ id, name, notes, isCompany }: { id: number; n
               <input value={editNotes} onChange={(e) => setEditNotes(e.target.value)} placeholder="Ex: Trailer na praça central" />
             </div>
 
-            <ClientTypeToggle isCompany={editIsCompany} onChange={setEditIsCompany} />
+            <ClientTypeToggle value={economics} onChange={setEconomics} />
 
             {error && <p style={{ color: '#b2465a', fontSize: 12 }}>{error}</p>}
 

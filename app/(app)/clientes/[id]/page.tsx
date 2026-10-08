@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { ArrowLeft, CircleDollarSign, HandCoins, Package, Zap } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
 import { formatBRL, formatOrderCode, TIME_ZONE } from '@/lib/format'
-import { consignmentPayout, getConsignmentFee } from '@/lib/consignment'
+import { consignmentBalance, hasOpenBalance } from '@/lib/consignment'
 import { ClientSaleForm } from '@/components/client-sale-form'
 import { ClientSaleRow } from '@/components/client-sale-row'
 import { ClientPayoutForm } from '@/components/client-payout-form'
@@ -16,7 +16,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   const { id } = await params
   const clientId = Number(id)
 
-  const [client, products, consignmentFee] = await Promise.all([
+  const [client, products] = await Promise.all([
     prisma.client.findUnique({
       where: { id: clientId },
       include: {
@@ -30,7 +30,6 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       },
     }),
     prisma.product.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
-    getConsignmentFee(),
   ])
 
   if (!client) notFound()
@@ -62,9 +61,18 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   const totalRevenue = entries.reduce((sum, e) => sum + e.unitPrice * e.quantity, 0)
   const totalQuantity = entries.reduce((sum, e) => sum + e.quantity, 0)
   const avgTicket = entries.length ? totalRevenue / entries.length : 0
-  const payoutGenerated = consignmentPayout(totalQuantity, client.isCompany, consignmentFee)
+  const clientForCalc = {
+    isCompany: client.isCompany,
+    paymentType: client.paymentType,
+    direction: client.direction,
+    companyAmount: Number(client.companyAmount),
+    partnerAmount: Number(client.partnerAmount),
+  }
+  const payoutGenerated = consignmentBalance(totalQuantity, clientForCalc)
   const payoutPaid = client.payouts.reduce((sum, p) => sum + Number(p.amount), 0)
   const payoutDue = payoutGenerated - payoutPaid
+  const showPayout = hasOpenBalance(clientForCalc)
+  const isReceivable = client.direction === 'RECEBER'
 
   return (
     <>
@@ -75,12 +83,22 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <h1 className="section-title" style={{ margin: 0 }}>{client.name}</h1>
           {client.isCompany && <span className="status company">Empresa</span>}
-          <EditClientButton id={client.id} name={client.name} notes={client.notes} isCompany={client.isCompany} />
+          <EditClientButton client={{
+            id: client.id,
+            name: client.name,
+            notes: client.notes,
+            isCompany: client.isCompany,
+            paymentType: client.paymentType,
+            direction: client.direction,
+            siteSalePrice: Number(client.siteSalePrice),
+            companyAmount: Number(client.companyAmount),
+            partnerAmount: Number(client.partnerAmount),
+          }} />
         </div>
         <p className="section-sub">{client.notes || 'Vendas registradas para este cliente.'}</p>
       </div>
 
-      <div className="metrics" style={{ gridTemplateColumns: client.isCompany ? 'repeat(3, 1fr)' : 'repeat(4, 1fr)' }}>
+      <div className="metrics" style={{ gridTemplateColumns: showPayout ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)' }}>
         <div className="metric fin-card accent-green">
           <div className="metric-top"><div className="metric-icon tint-green"><CircleDollarSign /></div></div>
           <p>Total vendido</p><h3>{formatBRL(totalRevenue)}</h3><small>desde o início</small>
@@ -93,11 +111,12 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           <div className="metric-top"><div className="metric-icon tint-berry"><Zap /></div></div>
           <p>Ticket médio</p><h3>{formatBRL(avgTicket)}</h3><small>por lançamento</small>
         </div>
-        {!client.isCompany && (
+        {showPayout && (
           <div className="metric fin-card accent-purple">
             <div className="metric-top"><div className="metric-icon tint-lilac"><HandCoins /></div></div>
-            <p>Ainda a repassar</p><h3 style={{ color: payoutDue > 0 ? undefined : 'var(--green)' }}>{formatBRL(payoutDue)}</h3>
-            <small>{formatBRL(payoutGenerated)} gerado · {formatBRL(payoutPaid)} já repassado</small>
+            <p>{isReceivable ? 'Ainda a receber' : 'Ainda a repassar'}</p>
+            <h3 style={{ color: payoutDue > 0 ? undefined : 'var(--green)' }}>{formatBRL(payoutDue)}</h3>
+            <small>{formatBRL(payoutGenerated)} gerado · {formatBRL(payoutPaid)} já {isReceivable ? 'recebido' : 'repassado'}</small>
           </div>
         )}
       </div>
@@ -112,11 +131,16 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         </div>
       </section>
 
-      {!client.isCompany && (
+      {showPayout && (
         <section className="panel" style={{ marginBottom: 20 }}>
-          <div className="panel-head"><div><h2>Registrar repasse</h2><p>Anote quanto já foi pago a este ponto de venda</p></div></div>
+          <div className="panel-head">
+            <div>
+              <h2>{isReceivable ? 'Registrar recebimento' : 'Registrar repasse'}</h2>
+              <p>{isReceivable ? 'Anote quanto este cliente já pagou à empresa' : 'Anote quanto já foi pago a este ponto de venda'}</p>
+            </div>
+          </div>
           <div style={{ marginTop: 16 }}>
-            <ClientPayoutForm clientId={client.id} />
+            <ClientPayoutForm clientId={client.id} direction={client.direction} />
           </div>
           {client.payouts.length > 0 && (
             <div className="table-wrap" style={{ marginTop: 16 }}>
