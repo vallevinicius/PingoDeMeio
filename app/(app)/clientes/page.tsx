@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { formatBRL } from '@/lib/format'
-import { consignmentPayout, getConsignmentFee } from '@/lib/consignment'
+import { consignmentBalance, getConsignmentFee, hasOpenBalance } from '@/lib/consignment'
 import { ClientForm } from '@/components/client-form'
 import { DeleteClientButton } from '@/components/delete-client-button'
 import { EditClientButton } from '@/components/edit-client-button'
@@ -9,7 +9,7 @@ import { EditClientButton } from '@/components/edit-client-button'
 export const dynamic = 'force-dynamic'
 
 export default async function ClientesPage() {
-  const [clients, consignmentFee] = await Promise.all([
+  const [clients, defaultPartnerAmount] = await Promise.all([
     prisma.client.findMany({
       orderBy: { name: 'asc' },
       include: {
@@ -31,7 +31,7 @@ export default async function ClientesPage() {
       <section className="panel" style={{ marginBottom: 20 }}>
         <div className="panel-head"><div><h2>Novo cliente</h2><p>Cadastre um ponto de venda parceiro</p></div></div>
         <div style={{ marginTop: 16 }}>
-          <ClientForm />
+          <ClientForm defaultPartnerAmount={defaultPartnerAmount} />
         </div>
       </section>
 
@@ -45,9 +45,18 @@ export default async function ClientesPage() {
         const orderQty = client.orders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0), 0)
         const total = manualTotal + orderTotal
         const qty = manualQty + orderQty
-        const payoutGenerated = consignmentPayout(qty, client.isCompany, consignmentFee)
-        const payoutPaid = client.payouts.reduce((sum, p) => sum + Number(p.amount), 0)
-        const payoutDue = payoutGenerated - payoutPaid
+        const clientForCalc = {
+          isCompany: client.isCompany,
+          paymentType: client.paymentType,
+          direction: client.direction,
+          companyAmount: Number(client.companyAmount),
+          partnerAmount: Number(client.partnerAmount),
+        }
+        const balanceGenerated = consignmentBalance(qty, clientForCalc)
+        const balancePaid = client.payouts.reduce((sum, p) => sum + Number(p.amount), 0)
+        const balanceDue = balanceGenerated - balancePaid
+        const showBalance = hasOpenBalance(clientForCalc)
+        const balanceLabel = client.direction === 'RECEBER' ? 'a receber' : 'a repassar'
         return (
           <section className="panel" style={{ marginBottom: 16 }} key={client.id}>
             <div className="panel-head">
@@ -63,14 +72,24 @@ export default async function ClientesPage() {
                   <b style={{ display: 'block', fontSize: 16 }}>{formatBRL(total)}</b>
                   <small style={{ color: 'var(--muted)' }}>{qty} unidade{qty === 1 ? '' : 's'} vendida{qty === 1 ? '' : 's'}</small>
                 </div>
-                {!client.isCompany && (
+                {showBalance && (
                   <div style={{ textAlign: 'right' }}>
-                    <b style={{ display: 'block', fontSize: 16, color: payoutDue > 0 ? 'var(--purple)' : 'var(--green)' }}>{formatBRL(payoutDue)}</b>
-                    <small style={{ color: 'var(--muted)' }}>a repassar</small>
+                    <b style={{ display: 'block', fontSize: 16, color: balanceDue > 0 ? 'var(--purple)' : 'var(--green)' }}>{formatBRL(balanceDue)}</b>
+                    <small style={{ color: 'var(--muted)' }}>{balanceLabel}</small>
                   </div>
                 )}
                 <Link href={`/clientes/${client.id}`} className="link-button" style={{ textDecoration: 'none' }}>Ver vendas <span>→</span></Link>
-                <EditClientButton id={client.id} name={client.name} notes={client.notes} isCompany={client.isCompany} />
+                <EditClientButton client={{
+                  id: client.id,
+                  name: client.name,
+                  notes: client.notes,
+                  isCompany: client.isCompany,
+                  paymentType: client.paymentType,
+                  direction: client.direction,
+                  siteSalePrice: Number(client.siteSalePrice),
+                  companyAmount: Number(client.companyAmount),
+                  partnerAmount: Number(client.partnerAmount),
+                }} />
                 <DeleteClientButton id={client.id} />
               </div>
             </div>

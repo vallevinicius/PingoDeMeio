@@ -21,6 +21,8 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -.02em; }
 .segmented-option { display: flex; align-items: center; gap: 6px; border: 0; background: transparent; border-radius: 9px; padding: 9px 16px; font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; transition: background .15s ease, color .15s ease, box-shadow .15s ease; }
 .segmented-option:hover:not(.selected) { color: var(--foreground); }
 .segmented-option.selected { background: #fff; color: var(--purple); box-shadow: 0 2px 8px rgba(53,19,72,.12); }
+.segmented-sm { border-radius: 10px; padding: 3px; }
+.segmented-sm .segmented-option { padding: 6px 12px; font-size: 11px; border-radius: 7px; }
 .field-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
 .field-group label { font-size: 11px; font-weight: 700; color: var(--muted); }
 .field-group input, .field-group select { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 13px; background: #fff; color: var(--foreground); transition: border-color .15s ease, box-shadow .15s ease; }

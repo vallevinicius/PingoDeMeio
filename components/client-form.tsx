@@ -2,13 +2,24 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ClientTypeToggle } from '@/components/client-type-toggle'
+import { ClientTypeToggle, type ClientEconomics } from '@/components/client-type-toggle'
 
-export function ClientForm() {
+function emptyEconomics(defaultPartnerAmount: number): ClientEconomics {
+  return {
+    isCompany: false,
+    paymentType: 'SOBRE_VENDA',
+    direction: 'REPASSAR',
+    siteSalePrice: '',
+    companyAmount: '',
+    partnerAmount: defaultPartnerAmount.toFixed(2),
+  }
+}
+
+export function ClientForm({ defaultPartnerAmount }: { defaultPartnerAmount: number }) {
   const router = useRouter()
   const [name, setName] = useState('')
   const [notes, setNotes] = useState('')
-  const [isCompany, setIsCompany] = useState(false)
+  const [economics, setEconomics] = useState<ClientEconomics>(() => emptyEconomics(defaultPartnerAmount))
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
@@ -20,7 +31,16 @@ export function ClientForm() {
       const res = await fetch('/api/clients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, notes: notes.trim() || undefined, isCompany }),
+        body: JSON.stringify({
+          name,
+          notes: notes.trim() || undefined,
+          isCompany: economics.isCompany,
+          paymentType: economics.paymentType,
+          direction: economics.direction,
+          siteSalePrice: Number(economics.siteSalePrice || 0),
+          companyAmount: Number(economics.companyAmount || 0),
+          partnerAmount: Number(economics.partnerAmount || 0),
+        }),
       })
       if (!res.ok) {
         const body = await res.json()
@@ -29,7 +49,7 @@ export function ClientForm() {
       }
       setName('')
       setNotes('')
-      setIsCompany(false)
+      setEconomics(emptyEconomics(defaultPartnerAmount))
       router.refresh()
     } finally {
       setSaving(false)
@@ -51,7 +71,7 @@ export function ClientForm() {
           {saving ? 'Adicionando...' : 'Adicionar cliente'}
         </button>
       </div>
-      <ClientTypeToggle isCompany={isCompany} onChange={setIsCompany} />
+      <ClientTypeToggle value={economics} onChange={setEconomics} />
       {error && <span style={{ color: '#b2465a', fontSize: 12 }}>{error}</span>}
     </form>
   )

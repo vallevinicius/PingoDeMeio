@@ -27,7 +27,7 @@ export default async function ConfiguracoesPage() {
       </section>
 
       <section className="panel" style={{ marginTop: 20 }}>
-        <div className="panel-head"><div><h2>Consignação</h2><p>Quanto repassamos a cada cliente por açaí vendido nos pontos de venda (não vale para clientes marcados como "venda da empresa")</p></div></div>
+        <div className="panel-head"><div><h2>Consignação</h2><p>Valor padrão sugerido ao cadastrar um novo ponto de venda (cada cliente pode ajustar o seu em "Editar cliente")</p></div></div>
         <div style={{ marginTop: 16 }}>
           <ConsignmentFeeForm initialValue={consignmentFee} />
         </div>
