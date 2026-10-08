@@ -2,6 +2,7 @@ import { CircleDollarSign, ShoppingBag, Sparkles, TrendingUp, Zap } from 'lucide
 import { getDashboardData } from '@/lib/dashboard'
 import { brParts, formatBRL, formatTime, TIME_ZONE } from '@/lib/format'
 import { OrderStatusBadge } from '@/components/order-status-badge'
+import { AcaiMark } from '@/components/acai-mark'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,15 +20,14 @@ export default async function Page() {
     <>
       <div className="welcome">
         <div>
-          <p className="eyebrow">{todayLabel.toUpperCase()}</p>
-          <h1>{greeting}, Pingo de Meio <span>✦</span></h1>
-          <p className="subtext">Acompanhe o desempenho do Pingo de Meio hoje.</p>
+          <h1>{greeting}, Pingo de Meio</h1>
+          <p className="subtext">{todayLabel}, acompanhe o desempenho de hoje.</p>
         </div>
         <a className="export" href="/api/export/today"><TrendingUp size={16} /> Exportar relatório</a>
       </div>
 
       <div className="metrics">
-        <Metric tint="tint-green" icon={<CircleDollarSign />} label="Receita de hoje" value={formatBRL(data.revenue)} trend={data.revenueTrendPct} note="vs. ontem" />
+        <Metric tint="tint-green" icon={<CircleDollarSign />} label="Receita de hoje" value={formatBRL(data.revenue)} trend={data.revenueTrendPct} note="vs. ontem" mark />
         <Metric tint="tint-gold" icon={<ShoppingBag />} label="Açaís vendidos" value={String(data.itemsSold)} trend={data.itemsSoldTrendPct} note="vs. ontem" />
         <Metric tint="tint-berry" icon={<Zap />} label="Ticket médio" value={formatBRL(data.avgTicket)} trend={data.avgTicketTrendPct} note="vs. ontem" />
         <Metric tint="tint-lilac" icon={<Sparkles />} label="Mais pedido" value={data.topProduct?.name ?? 'X'} note={data.topProduct ? `${data.topProduct.count} pedidos hoje` : 'Sem pedidos hoje'} />
@@ -144,9 +144,10 @@ function donutGradient(dist: { color: string; pct: number }[]) {
   return `conic-gradient(${stops.join(', ')})`
 }
 
-function Metric({ icon, label, value, trend, note, tint }: { icon: React.ReactNode; label: string; value: string; trend?: number | null; note: string; tint: string }) {
+function Metric({ icon, label, value, trend, note, tint, mark }: { icon: React.ReactNode; label: string; value: string; trend?: number | null; note: string; tint: string; mark?: boolean }) {
   return (
     <div className="metric">
+      {mark && <AcaiMark className="metric-mark" />}
       <div className="metric-top">
         <div className={`metric-icon ${tint}`}>{icon}</div>
         {trend !== undefined && trend !== null && (

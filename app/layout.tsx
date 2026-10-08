@@ -1,9 +1,16 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Fraunces } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'], display: 'swap' })
+const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-sans' })
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-display',
+  weight: 'variable',
+  axes: ['opsz', 'SOFT'],
+})
 
 export const metadata: Metadata = {
   title: 'Pingo de Meio',
@@ -30,7 +37,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className="bg-background">
-      <body className={`antialiased ${inter.className}`} suppressHydrationWarning>
+      <body className={`antialiased ${inter.variable} ${fraunces.variable} ${inter.className}`} suppressHydrationWarning>
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
