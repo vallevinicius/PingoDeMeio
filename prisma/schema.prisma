@@ -120,13 +120,14 @@ model Task {
 }
 
 model Client {
-  id        Int          @id @default(autoincrement())
+  id        Int            @id @default(autoincrement())
   name      String
   notes     String?
-  isCompany Boolean      @default(false)
-  createdAt DateTime     @default(now())
+  isCompany Boolean        @default(false)
+  createdAt DateTime       @default(now())
   sales     ClientSale[]
   orders    Order[]
+  payouts   ClientPayout[]
 }
 
 model ClientSale {
@@ -137,6 +138,16 @@ model ClientSale {
   productId Int
   quantity  Int      @default(1)
   unitPrice Decimal  @db.Decimal(10, 2)
+  date      DateTime
+  createdAt DateTime @default(now())
+}
+
+model ClientPayout {
+  id        Int      @id @default(autoincrement())
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId  Int
+  amount    Decimal  @db.Decimal(10, 2)
+  note      String?
   date      DateTime
   createdAt DateTime @default(now())
 }

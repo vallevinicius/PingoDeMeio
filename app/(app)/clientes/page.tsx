@@ -15,6 +15,7 @@ export default async function ClientesPage() {
       include: {
         sales: true,
         orders: { where: { status: { not: 'CANCELADO' }, paid: true }, include: { items: true } },
+        payouts: true,
       },
     }),
     getConsignmentFee(),
@@ -44,7 +45,9 @@ export default async function ClientesPage() {
         const orderQty = client.orders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0), 0)
         const total = manualTotal + orderTotal
         const qty = manualQty + orderQty
-        const payout = consignmentPayout(qty, client.isCompany, consignmentFee)
+        const payoutGenerated = consignmentPayout(qty, client.isCompany, consignmentFee)
+        const payoutPaid = client.payouts.reduce((sum, p) => sum + Number(p.amount), 0)
+        const payoutDue = payoutGenerated - payoutPaid
         return (
           <section className="panel" style={{ marginBottom: 16 }} key={client.id}>
             <div className="panel-head">
@@ -62,7 +65,7 @@ export default async function ClientesPage() {
                 </div>
                 {!client.isCompany && (
                   <div style={{ textAlign: 'right' }}>
-                    <b style={{ display: 'block', fontSize: 16, color: 'var(--purple)' }}>{formatBRL(payout)}</b>
+                    <b style={{ display: 'block', fontSize: 16, color: payoutDue > 0 ? 'var(--purple)' : 'var(--green)' }}>{formatBRL(payoutDue)}</b>
                     <small style={{ color: 'var(--muted)' }}>a repassar</small>
                   </div>
                 )}
