@@ -2,13 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { formatBRL, paymentLabel } from '@/lib/format'
 
-export function ClientPayoutRow({ id, date, amount, paymentMethod, note }: {
+export function ClientDeliveryRow({ id, date, productName, quantity, note }: {
   id: number
   date: string
-  amount: number
-  paymentMethod: string | null
+  productName: string
+  quantity: number
   note: string | null
 }) {
   const router = useRouter()
@@ -17,7 +16,7 @@ export function ClientPayoutRow({ id, date, amount, paymentMethod, note }: {
   async function remove() {
     setRemoving(true)
     try {
-      const res = await fetch(`/api/client-payouts/${id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/client-deliveries/${id}`, { method: 'DELETE' })
       if (res.ok) router.refresh()
     } finally {
       setRemoving(false)
@@ -27,8 +26,8 @@ export function ClientPayoutRow({ id, date, amount, paymentMethod, note }: {
   return (
     <tr>
       <td>{date}</td>
-      <td><b style={{ color: 'var(--green)' }}>{formatBRL(amount)}</b></td>
-      <td>{paymentMethod ? paymentLabel(paymentMethod) : 'X'}</td>
+      <td><b>{productName}</b></td>
+      <td>{quantity}x</td>
       <td>{note ?? 'X'}</td>
       <td>
         <button type="button" className="link-button" style={{ fontSize: 12, color: '#b2465a' }} disabled={removing} onClick={remove}>

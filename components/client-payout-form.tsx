@@ -15,6 +15,7 @@ export function ClientPayoutForm({ clientId, direction = 'REPASSAR' }: { clientI
   const verb = direction === 'RECEBER' ? 'recebido' : 'repassado'
   const action = direction === 'RECEBER' ? 'recebimento' : 'repasse'
   const [amount, setAmount] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState('')
   const [note, setNote] = useState('')
   const [date, setDate] = useState(todayISO())
   const [saving, setSaving] = useState(false)
@@ -28,7 +29,7 @@ export function ClientPayoutForm({ clientId, direction = 'REPASSAR' }: { clientI
       const res = await fetch(`/api/clients/${clientId}/payouts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: Number(amount), note: note.trim() || undefined, date }),
+        body: JSON.stringify({ amount: Number(amount), paymentMethod: paymentMethod || undefined, note: note.trim() || undefined, date }),
       })
       if (!res.ok) {
         const body = await res.json()
@@ -36,6 +37,7 @@ export function ClientPayoutForm({ clientId, direction = 'REPASSAR' }: { clientI
         return
       }
       setAmount('')
+      setPaymentMethod('')
       setNote('')
       setDate(todayISO())
       router.refresh()
@@ -50,6 +52,15 @@ export function ClientPayoutForm({ clientId, direction = 'REPASSAR' }: { clientI
         <div className="field-group" style={{ margin: 0 }}>
           <label>Valor {verb}</label>
           <CurrencyInput value={amount} onChange={setAmount} required style={{ width: 120 }} />
+        </div>
+        <div className="field-group" style={{ margin: 0 }}>
+          <label>Forma de pagamento</label>
+          <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} style={{ width: 140 }}>
+            <option value="">Não informado</option>
+            <option value="PIX">Pix</option>
+            <option value="CARTAO">Cartão</option>
+            <option value="DINHEIRO">Dinheiro</option>
+          </select>
         </div>
         <div className="field-group" style={{ margin: 0 }}>
           <label>Data</label>

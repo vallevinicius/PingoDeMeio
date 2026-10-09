@@ -8,6 +8,8 @@ import { ClientSaleForm } from '@/components/client-sale-form'
 import { ClientSaleRow } from '@/components/client-sale-row'
 import { ClientPayoutForm } from '@/components/client-payout-form'
 import { ClientPayoutRow } from '@/components/client-payout-row'
+import { ClientDeliveryForm } from '@/components/client-delivery-form'
+import { ClientDeliveryRow } from '@/components/client-delivery-row'
 import { EditClientButton } from '@/components/edit-client-button'
 
 export const dynamic = 'force-dynamic'
@@ -27,6 +29,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           orderBy: { createdAt: 'desc' },
         },
         payouts: { orderBy: { date: 'desc' } },
+        deliveries: { include: { product: true }, orderBy: { date: 'desc' } },
       },
     }),
     prisma.product.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
@@ -37,6 +40,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   const manualEntries = client.sales.map((sale) => ({
     key: `manual-${sale.id}`,
     saleId: sale.id as number | null,
+    productId: sale.productId,
     date: sale.date,
     productName: sale.product.name,
     quantity: sale.quantity,
@@ -48,6 +52,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
     order.items.map((item, i) => ({
       key: `order-${order.id}-${i}`,
       saleId: null as number | null,
+      productId: item.productId,
       date: order.createdAt,
       productName: item.product.name,
       quantity: item.quantity,
@@ -73,6 +78,19 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   const payoutDue = payoutGenerated - payoutPaid
   const showPayout = hasOpenBalance(clientForCalc)
   const isReceivable = client.direction === 'RECEBER'
+
+  const stockByProduct = new Map<number, { name: string; sizeLabel: string; delivered: number; sold: number }>()
+  for (const delivery of client.deliveries) {
+    const row = stockByProduct.get(delivery.productId) ?? { name: delivery.product.name, sizeLabel: delivery.product.sizeLabel, delivered: 0, sold: 0 }
+    row.delivered += delivery.quantity
+    stockByProduct.set(delivery.productId, row)
+  }
+  for (const entry of entries) {
+    const row = stockByProduct.get(entry.productId)
+    if (row) row.sold += entry.quantity
+  }
+  const stockRows = [...stockByProduct.entries()].map(([productId, row]) => ({ productId, ...row, remaining: row.delivered - row.sold }))
+  const totalDelivered = client.deliveries.reduce((sum, d) => sum + d.quantity, 0)
 
   return (
     <>
@@ -122,6 +140,55 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       </div>
 
       <section className="panel" style={{ marginBottom: 20 }}>
+        <div className="panel-head"><div><h2>Estoque no cliente</h2><p>O que já foi entregue e quanto ainda deve estar lá, por sabor</p></div></div>
+        <div style={{ marginTop: 16 }}>
+          <ClientDeliveryForm
+            clientId={client.id}
+            products={products.map((p) => ({ id: p.id, name: p.name, sizeLabel: p.sizeLabel }))}
+          />
+        </div>
+
+        {stockRows.length > 0 && (
+          <div style={{ marginTop: 20 }}>
+            {stockRows.map((row) => (
+              <div className="stock-row" key={row.productId}>
+                <div className="stock-info">
+                  <span>{row.name} <small style={{ color: '#a39aa4' }}>({row.sizeLabel})</small></span>
+                  <b className={row.remaining <= 0 ? 'low' : row.remaining <= row.delivered * 0.25 ? 'medium' : 'good'}>
+                    {row.remaining < 0 ? 0 : row.remaining} em estoque
+                  </b>
+                </div>
+                <small style={{ color: 'var(--muted)' }}>{row.delivered} entregue{row.delivered === 1 ? '' : 's'}, {row.sold} vendido{row.sold === 1 ? '' : 's'}</small>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {client.deliveries.length > 0 && (
+          <div className="table-wrap" style={{ marginTop: 20 }}>
+            <table>
+              <thead><tr><th>DATA</th><th>SABOR</th><th>QTD</th><th>OBSERVAÇÃO</th><th></th></tr></thead>
+              <tbody>
+                {client.deliveries.map((d) => (
+                  <ClientDeliveryRow
+                    key={d.id}
+                    id={d.id}
+                    productName={d.product.name}
+                    quantity={d.quantity}
+                    note={d.note}
+                    date={new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: TIME_ZONE }).format(d.date)}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {client.deliveries.length === 0 && (
+          <p className="subtext" style={{ marginTop: 16 }}>Nenhuma entrega registrada ainda. Total entregue: {totalDelivered}.</p>
+        )}
+      </section>
+
+      <section className="panel" style={{ marginBottom: 20 }}>
         <div className="panel-head"><div><h2>Registrar venda</h2><p>Anote o que foi vendido neste ponto fora do Terminal PDV</p></div></div>
         <div style={{ marginTop: 16 }}>
           <ClientSaleForm
@@ -145,13 +212,14 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           {client.payouts.length > 0 && (
             <div className="table-wrap" style={{ marginTop: 16 }}>
               <table>
-                <thead><tr><th>DATA</th><th>VALOR</th><th>OBSERVAÇÃO</th><th></th></tr></thead>
+                <thead><tr><th>DATA</th><th>VALOR</th><th>FORMA</th><th>OBSERVAÇÃO</th><th></th></tr></thead>
                 <tbody>
                   {client.payouts.map((p) => (
                     <ClientPayoutRow
                       key={p.id}
                       id={p.id}
                       amount={Number(p.amount)}
+                      paymentMethod={p.paymentMethod}
                       note={p.note}
                       date={new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: TIME_ZONE }).format(p.date)}
                     />

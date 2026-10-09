@@ -45,6 +45,7 @@ model Product {
   recipe      ProductIngredient[]
   orderItems  OrderItem[]
   clientSales ClientSale[]
+  deliveries  ClientDelivery[]
 }
 
 model Ingredient {
@@ -143,6 +144,7 @@ model Client {
   sales         ClientSale[]
   orders        Order[]
   payouts       ClientPayout[]
+  deliveries    ClientDelivery[]
 }
 
 model ClientSale {
@@ -158,10 +160,23 @@ model ClientSale {
 }
 
 model ClientPayout {
+  id            Int            @id @default(autoincrement())
+  client        Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId      Int
+  amount        Decimal        @db.Decimal(10, 2)
+  paymentMethod PaymentMethod?
+  note          String?
+  date          DateTime
+  createdAt     DateTime       @default(now())
+}
+
+model ClientDelivery {
   id        Int      @id @default(autoincrement())
   client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   clientId  Int
-  amount    Decimal  @db.Decimal(10, 2)
+  product   Product  @relation(fields: [productId], references: [id])
+  productId Int
+  quantity  Int      @default(1)
   note      String?
   date      DateTime
   createdAt DateTime @default(now())
