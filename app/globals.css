@@ -154,3 +154,12 @@ h1, .welcome h1, .section-title, .panel h2, .modal-card h2, .metric h3, .donut b
 .modal-actions .submit-btn { width: auto; flex: 1; }
 .cancel-btn { background: transparent; border: 1px solid var(--border); color: var(--foreground); padding: 13px; border-radius: 10px; font-weight: 700; font-size: 13px; flex: 1; transition: border-color .15s ease, background .15s ease; }
 .cancel-btn:hover:not(:disabled) { background: #faf8f6; border-color: #d9c8df; }
+
+.rates-toggle { border: 1px solid var(--border); border-radius: 10px; padding: 0; overflow: hidden; }
+.rates-toggle summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 12px 14px; font-size: 13px; font-weight: 700; color: var(--purple); background: #faf7f9; transition: background .15s ease; }
+.rates-toggle summary::-webkit-details-marker { display: none; }
+.rates-toggle summary:hover { background: #f4eef2; }
+.rates-toggle summary::before { content: '▸'; font-size: 10px; color: var(--muted); transition: transform .15s ease; }
+.rates-toggle[open] summary::before { transform: rotate(90deg); }
+.rates-toggle[open] summary { border-bottom: 1px solid var(--border); }
+.rates-toggle-body { padding: 16px; }

@@ -29,7 +29,7 @@ export function ClientProductRateRow({ id, productName, siteSalePrice, companyAm
       <td><b>{productName}</b></td>
       <td>{siteSalePrice > 0 ? formatBRL(siteSalePrice) : <span style={{ color: 'var(--muted)' }}>Não informado</span>}</td>
       <td>{formatBRL(companyAmount)}</td>
-      <td>{formatBRL(partnerAmount)}</td>
+      <td>{partnerAmount > 0 ? formatBRL(partnerAmount) : <span style={{ color: 'var(--muted)' }}>Não informado</span>}</td>
       <td>
         <button type="button" className="link-button" style={{ fontSize: 12, color: '#b2465a' }} disabled={removing} onClick={remove}>
           {removing ? 'Removendo...' : 'Usar padrão'}

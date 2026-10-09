@@ -104,37 +104,37 @@ export default async function ClientesPage() {
             </div>
 
             {!client.isCompany && (
-              <details style={{ marginTop: 16, borderTop: '1px solid #f2eeee', paddingTop: 14 }}>
-                <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--purple)' }}>
+              <details className="rates-toggle" style={{ marginTop: 16 }}>
+                <summary>
                   Preços por sabor {client.productRates.length > 0 ? `(${client.productRates.length})` : ''}
                 </summary>
-                <div style={{ marginTop: 16 }}>
+                <div className="rates-toggle-body">
                   <ClientProductRateForm
                     clientId={client.id}
                     products={products.map((p) => ({ id: p.id, name: p.name, sizeLabel: p.sizeLabel }))}
                     defaultCompanyAmount={Number(client.companyAmount)}
                     defaultPartnerAmount={Number(client.partnerAmount)}
                   />
+                  {client.productRates.length > 0 && (
+                    <div className="table-wrap" style={{ marginTop: 16 }}>
+                      <table>
+                        <thead><tr><th>SABOR</th><th>VENDA NO LOCAL</th><th>EMPRESA RECEBE</th><th>CLIENTE RECEBE</th><th></th></tr></thead>
+                        <tbody>
+                          {client.productRates.map((r) => (
+                            <ClientProductRateRow
+                              key={r.id}
+                              id={r.id}
+                              productName={r.product.name}
+                              siteSalePrice={Number(r.siteSalePrice)}
+                              companyAmount={Number(r.companyAmount)}
+                              partnerAmount={Number(r.partnerAmount)}
+                            />
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
-                {client.productRates.length > 0 && (
-                  <div className="table-wrap" style={{ marginTop: 16 }}>
-                    <table>
-                      <thead><tr><th>SABOR</th><th>VENDA NO LOCAL</th><th>EMPRESA RECEBE</th><th>CLIENTE RECEBE</th><th></th></tr></thead>
-                      <tbody>
-                        {client.productRates.map((r) => (
-                          <ClientProductRateRow
-                            key={r.id}
-                            id={r.id}
-                            productName={r.product.name}
-                            siteSalePrice={Number(r.siteSalePrice)}
-                            companyAmount={Number(r.companyAmount)}
-                            partnerAmount={Number(r.partnerAmount)}
-                          />
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
               </details>
             )}
           </section>
