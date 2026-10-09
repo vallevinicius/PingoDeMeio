@@ -64,6 +64,7 @@ export function ClientProductRateForm({ clientId, products, defaultCompanyAmount
         <div className="field-group" style={{ margin: 0 }}>
           <label>Venda no local (un.)</label>
           <CurrencyInput value={siteSalePrice} onChange={setSiteSalePrice} style={{ width: 110 }} />
+          <small style={{ color: 'var(--muted)' }}>Deixe 0 se não souber</small>
         </div>
         <div className="field-group" style={{ margin: 0 }}>
           <label>Empresa recebe (un.)</label>

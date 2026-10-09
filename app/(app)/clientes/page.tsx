@@ -3,22 +3,25 @@ import { prisma } from '@/lib/prisma'
 import { formatBRL } from '@/lib/format'
 import { consignmentBalance, getConsignmentFee, hasOpenBalance } from '@/lib/consignment'
 import { ClientForm } from '@/components/client-form'
+import { ClientProductRateForm } from '@/components/client-product-rate-form'
+import { ClientProductRateRow } from '@/components/client-product-rate-row'
 import { DeleteClientButton } from '@/components/delete-client-button'
 import { EditClientButton } from '@/components/edit-client-button'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ClientesPage() {
-  const [clients, defaultPartnerAmount] = await Promise.all([
+  const [clients, products, defaultPartnerAmount] = await Promise.all([
     prisma.client.findMany({
       orderBy: { name: 'asc' },
       include: {
         sales: true,
         orders: { where: { status: { not: 'CANCELADO' }, paid: true }, include: { items: true } },
         payouts: true,
-        productRates: true,
+        productRates: { include: { product: true }, orderBy: { product: { name: 'asc' } } },
       },
     }),
+    prisma.product.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
     getConsignmentFee(),
   ])
 
@@ -99,6 +102,41 @@ export default async function ClientesPage() {
                 <DeleteClientButton id={client.id} />
               </div>
             </div>
+
+            {!client.isCompany && (
+              <details style={{ marginTop: 16, borderTop: '1px solid #f2eeee', paddingTop: 14 }}>
+                <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--purple)' }}>
+                  Preços por sabor {client.productRates.length > 0 ? `(${client.productRates.length})` : ''}
+                </summary>
+                <div style={{ marginTop: 16 }}>
+                  <ClientProductRateForm
+                    clientId={client.id}
+                    products={products.map((p) => ({ id: p.id, name: p.name, sizeLabel: p.sizeLabel }))}
+                    defaultCompanyAmount={Number(client.companyAmount)}
+                    defaultPartnerAmount={Number(client.partnerAmount)}
+                  />
+                </div>
+                {client.productRates.length > 0 && (
+                  <div className="table-wrap" style={{ marginTop: 16 }}>
+                    <table>
+                      <thead><tr><th>SABOR</th><th>VENDA NO LOCAL</th><th>EMPRESA RECEBE</th><th>CLIENTE RECEBE</th><th></th></tr></thead>
+                      <tbody>
+                        {client.productRates.map((r) => (
+                          <ClientProductRateRow
+                            key={r.id}
+                            id={r.id}
+                            productName={r.product.name}
+                            siteSalePrice={Number(r.siteSalePrice)}
+                            companyAmount={Number(r.companyAmount)}
+                            partnerAmount={Number(r.partnerAmount)}
+                          />
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </details>
+            )}
           </section>
         )
       })}

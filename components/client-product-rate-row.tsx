@@ -27,7 +27,7 @@ export function ClientProductRateRow({ id, productName, siteSalePrice, companyAm
   return (
     <tr>
       <td><b>{productName}</b></td>
-      <td>{formatBRL(siteSalePrice)}</td>
+      <td>{siteSalePrice > 0 ? formatBRL(siteSalePrice) : <span style={{ color: 'var(--muted)' }}>Não informado</span>}</td>
       <td>{formatBRL(companyAmount)}</td>
       <td>{formatBRL(partnerAmount)}</td>
       <td>
