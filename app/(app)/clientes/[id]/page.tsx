@@ -10,6 +10,8 @@ import { ClientPayoutForm } from '@/components/client-payout-form'
 import { ClientPayoutRow } from '@/components/client-payout-row'
 import { ClientDeliveryForm } from '@/components/client-delivery-form'
 import { ClientDeliveryRow } from '@/components/client-delivery-row'
+import { ClientProductRateForm } from '@/components/client-product-rate-form'
+import { ClientProductRateRow } from '@/components/client-product-rate-row'
 import { EditClientButton } from '@/components/edit-client-button'
 
 export const dynamic = 'force-dynamic'
@@ -30,6 +32,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         },
         payouts: { orderBy: { date: 'desc' } },
         deliveries: { include: { product: true }, orderBy: { date: 'desc' } },
+        productRates: { include: { product: true }, orderBy: { product: { name: 'asc' } } },
       },
     }),
     prisma.product.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
@@ -73,7 +76,8 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
     companyAmount: Number(client.companyAmount),
     partnerAmount: Number(client.partnerAmount),
   }
-  const payoutGenerated = consignmentBalance(totalQuantity, clientForCalc)
+  const productRateMap = new Map(client.productRates.map((r) => [r.productId, { companyAmount: Number(r.companyAmount), partnerAmount: Number(r.partnerAmount) }]))
+  const payoutGenerated = consignmentBalance(entries, clientForCalc, productRateMap)
   const payoutPaid = client.payouts.reduce((sum, p) => sum + Number(p.amount), 0)
   const payoutDue = payoutGenerated - payoutPaid
   const showPayout = hasOpenBalance(clientForCalc)
@@ -138,6 +142,42 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           </div>
         )}
       </div>
+
+      {!client.isCompany && (
+        <section className="panel" style={{ marginBottom: 20 }}>
+          <div className="panel-head"><div><h2>Preços por sabor</h2><p>Nossos açaís têm sabores com preços diferentes — defina aqui quanto cada um vende no local e quanto a empresa recebe</p></div></div>
+          <div style={{ marginTop: 16 }}>
+            <ClientProductRateForm
+              clientId={client.id}
+              products={products.map((p) => ({ id: p.id, name: p.name, sizeLabel: p.sizeLabel }))}
+              defaultCompanyAmount={Number(client.companyAmount)}
+              defaultPartnerAmount={Number(client.partnerAmount)}
+            />
+          </div>
+          {client.productRates.length > 0 && (
+            <div className="table-wrap" style={{ marginTop: 16 }}>
+              <table>
+                <thead><tr><th>SABOR</th><th>VENDA NO LOCAL</th><th>EMPRESA RECEBE</th><th>CLIENTE RECEBE</th><th></th></tr></thead>
+                <tbody>
+                  {client.productRates.map((r) => (
+                    <ClientProductRateRow
+                      key={r.id}
+                      id={r.id}
+                      productName={r.product.name}
+                      siteSalePrice={Number(r.siteSalePrice)}
+                      companyAmount={Number(r.companyAmount)}
+                      partnerAmount={Number(r.partnerAmount)}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {client.productRates.length === 0 && (
+            <p className="subtext" style={{ marginTop: 16 }}>Nenhum sabor com preço próprio ainda — usando o padrão do cliente ({formatBRL(Number(client.companyAmount))} empresa / {formatBRL(Number(client.partnerAmount))} cliente, por unidade).</p>
+          )}
+        </section>
+      )}
 
       <section className="panel" style={{ marginBottom: 20 }}>
         <div className="panel-head"><div><h2>Estoque no cliente</h2><p>O que já foi entregue e quanto ainda deve estar lá, por sabor</p></div></div>

@@ -46,6 +46,7 @@ model Product {
   orderItems  OrderItem[]
   clientSales ClientSale[]
   deliveries  ClientDelivery[]
+  clientRates ClientProductRate[]
 }
 
 model Ingredient {
@@ -145,6 +146,22 @@ model Client {
   orders        Order[]
   payouts       ClientPayout[]
   deliveries    ClientDelivery[]
+  productRates  ClientProductRate[]
+}
+
+model ClientProductRate {
+  id            Int      @id @default(autoincrement())
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId      Int
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId     Int
+  siteSalePrice Decimal  @default(0) @db.Decimal(10, 2)
+  companyAmount Decimal  @default(0) @db.Decimal(10, 2)
+  partnerAmount Decimal  @default(0) @db.Decimal(10, 2)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([clientId, productId])
 }
 
 model ClientSale {

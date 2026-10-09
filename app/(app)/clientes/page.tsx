@@ -16,6 +16,7 @@ export default async function ClientesPage() {
         sales: true,
         orders: { where: { status: { not: 'CANCELADO' }, paid: true }, include: { items: true } },
         payouts: true,
+        productRates: true,
       },
     }),
     getConsignmentFee(),
@@ -45,6 +46,10 @@ export default async function ClientesPage() {
         const orderQty = client.orders.reduce((sum, o) => sum + o.items.reduce((s, i) => s + i.quantity, 0), 0)
         const total = manualTotal + orderTotal
         const qty = manualQty + orderQty
+        const saleEntries = [
+          ...client.sales.map((s) => ({ productId: s.productId, quantity: s.quantity })),
+          ...client.orders.flatMap((o) => o.items.map((i) => ({ productId: i.productId, quantity: i.quantity }))),
+        ]
         const clientForCalc = {
           isCompany: client.isCompany,
           paymentType: client.paymentType,
@@ -52,7 +57,8 @@ export default async function ClientesPage() {
           companyAmount: Number(client.companyAmount),
           partnerAmount: Number(client.partnerAmount),
         }
-        const balanceGenerated = consignmentBalance(qty, clientForCalc)
+        const productRateMap = new Map(client.productRates.map((r) => [r.productId, { companyAmount: Number(r.companyAmount), partnerAmount: Number(r.partnerAmount) }]))
+        const balanceGenerated = consignmentBalance(saleEntries, clientForCalc, productRateMap)
         const balancePaid = client.payouts.reduce((sum, p) => sum + Number(p.amount), 0)
         const balanceDue = balanceGenerated - balancePaid
         const showBalance = hasOpenBalance(clientForCalc)
