@@ -60,7 +60,7 @@ export function ClientDeliveryForm({ clientId, products }: { clientId: number; p
         </div>
         <div className="field-group" style={{ margin: 0 }}>
           <label>Quantidade levada</label>
-          <input type="number" min={1} value={quantity} onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))} style={{ width: 110 }} />
+          <input type="number" min={1} value={quantity} onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))} onFocus={(e) => e.target.select()} style={{ width: 110 }} />
         </div>
         <div className="field-group" style={{ margin: 0 }}>
           <label>Data</label>

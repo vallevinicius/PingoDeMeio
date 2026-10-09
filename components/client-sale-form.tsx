@@ -69,7 +69,7 @@ export function ClientSaleForm({ clientId, products }: { clientId: number; produ
         </div>
         <div className="field-group" style={{ margin: 0 }}>
           <label>Quantidade</label>
-          <input type="number" min={1} value={quantity} onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))} style={{ width: 90 }} />
+          <input type="number" min={1} value={quantity} onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))} onFocus={(e) => e.target.select()} style={{ width: 90 }} />
         </div>
         <div className="field-group" style={{ margin: 0 }}>
           <label>Preço unitário</label>

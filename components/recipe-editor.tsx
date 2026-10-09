@@ -41,6 +41,7 @@ export function RecipeEditor({ ingredients, rows, onChange }: {
                 placeholder={`qtd. em ${ingredient?.unit ?? ''}`}
                 value={row.quantity}
                 onChange={(e) => updateRow(i, { quantity: e.target.value })}
+                onFocus={(e) => e.target.select()}
                 style={{ width: 120 }}
               />
             </div>

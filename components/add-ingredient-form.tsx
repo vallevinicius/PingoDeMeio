@@ -48,11 +48,11 @@ export function AddIngredientForm() {
       </div>
       <div className="field-group">
         <label>Quantidade</label>
-        <input type="number" step="0.1" value={quantity} onChange={(e) => setQuantity(e.target.value)} required style={{ width: 100 }} />
+        <input type="number" step="0.1" value={quantity} onChange={(e) => setQuantity(e.target.value)} onFocus={(e) => e.target.select()} required style={{ width: 100 }} />
       </div>
       <div className="field-group">
         <label>Mínimo</label>
-        <input type="number" step="0.1" value={minQuantity} onChange={(e) => setMinQuantity(e.target.value)} required style={{ width: 100 }} />
+        <input type="number" step="0.1" value={minQuantity} onChange={(e) => setMinQuantity(e.target.value)} onFocus={(e) => e.target.select()} required style={{ width: 100 }} />
       </div>
       <button className="submit-btn" style={{ width: 'auto', padding: '10px 18px' }} disabled={saving}>
         {saving ? 'Adicionando...' : 'Adicionar'}

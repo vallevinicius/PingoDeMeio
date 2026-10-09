@@ -126,7 +126,7 @@ export function EditOrderButton({ order, products, clients }: { order: Order; pr
 
                 <div className="field-group">
                   <label>Quantidade</label>
-                  <input type="number" min={1} value={quantity} onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))} />
+                  <input type="number" min={1} value={quantity} onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))} onFocus={(e) => e.target.select()} />
                 </div>
 
                 <div className="field-group">

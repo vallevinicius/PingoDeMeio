@@ -152,6 +152,7 @@ export function PdvForm({ products, clients }: { products: Product[]; clients: C
                       min={1}
                       value={line.quantity}
                       onChange={(e) => updateQuantity(line.productId, Number(e.target.value))}
+                      onFocus={(e) => e.target.select()}
                       style={{ width: 56 }}
                       aria-label="Quantidade"
                     />

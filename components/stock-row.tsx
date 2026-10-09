@@ -55,6 +55,7 @@ export function StockRow({ id, name, unit, quantity, minQuantity, pct, status }:
             step="0.1"
             value={value}
             onChange={(e) => setValue(e.target.value)}
+            onFocus={(e) => e.target.select()}
             style={{ width: 100 }}
           />
         </div>
